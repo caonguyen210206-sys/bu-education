@@ -11,6 +11,7 @@ const buStudy = (() => {
   const memory = new Map();
   const loaded = new Map();
   const families = new WeakMap();
+  const instances = new WeakMap();
   const groups = buCurriculum;
   const chapters = new Map(groups.flatMap(g=>g.chapters.map(c=>[c.id,{...c,grade:g.grade}])));
   const tags = ['recognize','apply','trap'];
@@ -59,7 +60,30 @@ const buStudy = (() => {
         const practiceChapterIds=buReviewedChapters.includes(id)?reviewedIds:[...reviewedIds,...data.chapterIds];
         const chapterQuestions=[...practiceChapterIds,...Object.keys(data.byLesson).flatMap(lesson=>
           reviewedByLesson[lesson]??data.byLesson[lesson])];
-        return {...data,reviewedByLesson,reviewedIds,practiceChapterIds,chapterQuestions};
+        const supplementalByLesson=Object.fromEntries(Object.keys(data.byLesson).map(lesson=>[lesson,[]]));
+        for(const {lessonId,questions} of Object.values(methodQuestions(chapters.get(id)))) {
+          if(!supplementalByLesson[lessonId])continue;
+          for(const q of questions.filter(q=>q.type==='short'&&!data.questions[q.id])) {
+            data.questions[q.id]={...q,chapterId:id,tags:['apply'],reviewed:true};
+            supplementalByLesson[lessonId].push(q.id);
+          }
+        }
+        for(const q of buExtraPractice(id)){
+          data.questions[q.id]=q;
+          if(supplementalByLesson[q.lessonId])supplementalByLesson[q.lessonId].push(q.id);
+          else chapterQuestions.push(q.id);
+        }
+        const practiceByLesson={};
+        const earlier=[];
+        for(const {id:lesson,title} of lessonCatalog[id]){
+          const legacy=buCuratedPracticeLessons.has(lesson)?[]:data.byLesson[lesson]||[];
+          const own=[...supplementalByLesson[lesson]||[],...reviewedByLesson[lesson]||[],...legacy];
+          const revision=/^(?:Bài \d+:\s*)?(?:Luyện tập chung|Bài tập cuối chương|Bài tập ôn)/iu.test(title);
+          practiceByLesson[lesson]=[...new Set(revision?[...own,...earlier]:own)];
+          if(!revision)earlier.push(...own);
+        }
+        const practiceIds=[...new Set([...chapterQuestions,...Object.values(practiceByLesson).flat()])];
+        return {...data,reviewedByLesson,reviewedIds,practiceChapterIds,chapterQuestions,practiceIds,practiceByLesson};
       }).catch(error=>{loaded.delete(id);throw error;}));
     }
     return loaded.get(id);
@@ -119,11 +143,12 @@ const buStudy = (() => {
     return {question:publicQuestion(q),hint:q.hint||q.rule||'',feedback:previous?
       grade(q,previous.response,previous.hinted,true):null};
   }
-  function exerciseStem(text) {
-    return normalize(text).replace(/[−–]/gu,'-').replace(/\d+(?:[,.]\d+)?/gu,'#')
-      .replace(/\s*dien ket qua bang so,? khong ghi don vi[.!]?$/gu,'')
+  function exerciseText(text) {
+    return normalize(text).replace(/[−–]/gu,'-')
+      .replace(/\s*(?:chi )?dien ket qua bang so(?:,? khong ghi don vi)?[.!]?$/gu,'')
       .replace(/\s+/gu,' ').replace(/[.!?]+$/gu,'').trim();
   }
+  function exerciseStem(text) { return exerciseText(text).replace(/\d+(?:[,.]\d+)?/gu,'#'); }
   function questionFamily(q) {
     if(!families.has(q))families.set(q,q.family||(q.type==='tf'?
       q.statements.map(s=>exerciseStem(s.text)).sort().join(' | '):exerciseStem(q.prompt)));
@@ -135,12 +160,27 @@ const buStudy = (() => {
     return q.statements?.length===4&&q.statements.every(s=>!s.text.includes('Đáp án đề xuất'))&&
       new Set(q.statements.map(s=>exerciseStem(s.text))).size===4;
   }
+  function exerciseInstance(q) {
+    if(!instances.has(q)){
+      const stem=exerciseText(q.prompt);
+      const choices=q.type==='mcq'&&/^(?:trong cac|hay chon|so nao|cap nao|diem nao|hinh nao|khang dinh nao|menh de nao|bieu thuc nao)\b/u.test(stem)
+        ?q.options.map(exerciseText).sort():null;
+      const statements=q.type==='tf'?q.statements.map(s=>JSON.stringify([exerciseText(s.text),s.figure??null])).sort():null;
+      instances.set(q,JSON.stringify([stem,q.figure??null,choices,statements]));
+    }
+    return instances.get(q);
+  }
   function lessonQuestions(data,lessonId) {
     return lessonId?(data.reviewedByLesson[lessonId]??data.byLesson[lessonId]):data.practiceChapterIds;
   }
   function practicePool(data,ids,type,levels) {
     return ids.map(id=>data.questions[id]).filter(q=>validExercise(q)&&(type==='mixed'||q.type===type)&&
       (!levels.length||levels.some(tag=>q.tags.includes(tag))));
+  }
+  function usablePractice(data,ids,type,levels) {
+    return practicePool(data,ids,type,levels).filter(q=>q.type==='mcq'?
+      q.options?.length===4&&new Set(q.options.map(exerciseText)).size===4&&q.options[q.answer]!=null:
+      q.type==='short'?q.answer!=null&&Number.isFinite(Number(q.answer)):true);
   }
   function methodQuestions(chapter) {
     const entries=workbookLessons(chapter).flatMap((lesson,li)=>getBookMethods(lesson).map(({method},mi)=>{
@@ -216,14 +256,14 @@ const buStudy = (() => {
     if (!run.chapters) return bank(run.chapterId);
     const banks = await Promise.all(run.chapters.map(bank));
     return {questions:Object.assign({},...banks.map(data=>data.questions)),chapterIds:banks.flatMap(data=>[...data.chapterIds,...data.reviewedIds]),
-      chapterQuestions:banks.flatMap(data=>data.chapterQuestions)};
+      chapterQuestions:banks.flatMap(data=>data.chapterQuestions),practiceIds:banks.flatMap(data=>data.practiceIds)};
   }
   function quiz(r,data) {
     return {...runSummary(r),chapterTitle:chapters.get(r.chapterId).title,deadline:r.deadline||r.started+86400000,
       questions:r.ids.map(id=>publicQuestion(data.questions[id])),
       drafts:r.drafts,feedback:Object.values(r.feedback),hints:r.hints};
   }
-  function select(pool,count,levels,marks,review,recent=new Set(),mixed=false) {
+  function select(pool,count,levels,marks,review,recent=new Set(),mixed=false,seenInstances) {
     const randomized=pool.map(q=>({q,tie:Math.random()}));
     const recentFamilies=new Set(pool.filter(q=>recent.has(q.id)).map(questionFamily));
     randomized.sort((a,b)=>{
@@ -240,12 +280,14 @@ const buStudy = (() => {
       let added=false;
       for(const tag of rotation) {
         if(picked.length===count) break;
-        const candidate=({q})=>!used.has(q.id)&&!families.has(questionFamily(q))&&(!tag||q.tags.includes(tag));
+        const candidate=({q})=>!used.has(q.id)&&!families.has(questionFamily(q))&&(!tag||q.tags.includes(tag))&&
+          (!seenInstances||!seenInstances.has(exerciseInstance(q)));
         const preferredType=['mcq','tf','short'][picked.length%3];
         const found=(mixed&&randomized.find(item=>candidate(item)&&item.q.type===preferredType))||randomized.find(candidate);
         if(!found) continue;
         used.add(found.q.id);
         families.add(questionFamily(found.q));
+        if(seenInstances)seenInstances.add(exerciseInstance(found.q));
         picked.push(found.q.id);
         added=true;
       }
@@ -255,6 +297,18 @@ const buStudy = (() => {
   }
   function recentQuestions(current) {
     return new Set(current.runs.slice(0,4).flatMap(run=>run.ids));
+  }
+  function selectPractice(pool,count,levels,marks,recent,mixed) {
+    const seen=new Set(),picked=[];
+    const recentInstances=new Set(pool.filter(q=>recent.has(q.id)).map(exerciseInstance));
+    const exactRecent=new Set(pool.filter(q=>recentInstances.has(exerciseInstance(q))).map(q=>q.id));
+    while(picked.length<count) {
+      const remaining=pool.filter(q=>!seen.has(exerciseInstance(q)));
+      const round=select(remaining,count-picked.length,levels,marks,false,exactRecent,mixed,seen);
+      if(!round.length)break;
+      picked.push(...round);
+    }
+    return picked;
   }
   function examSections(data,marks,recent) {
     const pools=Object.fromEntries(buExamFormat.map(({type})=>{
@@ -319,8 +373,8 @@ const buStudy = (() => {
       const grade=profile(id).user.grade;
       if(ids.some(id=>chapters.get(id)?.grade!==grade))throw Error('Chương không thuộc lớp đã chọn.');
       const banks=await Promise.all(ids.map(bank));
-      const available=banks.flatMap(data=>practicePool(data,lessonId?lessonQuestions(data,lessonId)||[]:data.chapterQuestions,type,levels));
-      return new Set(available.map(questionFamily)).size;
+      const available=banks.flatMap(data=>usablePractice(data,lessonId?data.practiceByLesson[lessonId]||[]:data.practiceIds,type,levels));
+      return new Set(available.map(exerciseInstance)).size;
     },
     async startQuiz(id,request) {
       const {grade}=profile(id).user;
@@ -332,21 +386,22 @@ const buStudy = (() => {
       const data=all?await runBank({chapters:scope}):await bank(chapter.id);
       const current=profile(id);
       const lessonId=request.lessonId||'';
-      const ids=review?(lessonId?[...data.byLesson[lessonId]||[],...data.reviewedByLesson[lessonId]||[]]:
-        [...new Set([...data.chapterIds,...data.chapterQuestions])]):
-        lessonId?lessonQuestions(data,lessonId):data.chapterQuestions;
+      const ids=review?(lessonId?[...new Set([...data.byLesson[lessonId]||[],...data.practiceByLesson[lessonId]||[]])]:
+        [...new Set([...data.chapterIds,...data.practiceIds])]):
+        lessonId?data.practiceByLesson[lessonId]:data.practiceIds;
       if(!ids) throw Error('Bài học không hợp lệ.');
       const type=format.includes(request.type)&&!review?request.type:'mixed';
       const levels=review?[]:tags.filter(t=>request.levels?.includes(t));
       const marks=Object.assign({},...scope.map(id=>current.marks[id]));
-      const pool=practicePool(data,ids,type,levels).filter(q=>!review||(marks[q.id]&&marks[q.id].correct<marks[q.id].units));
+      const pool=usablePractice(data,ids,type,levels).filter(q=>!review||(marks[q.id]&&marks[q.id].correct<marks[q.id].units));
       if(!pool.length) throw Error(review?'Chương này chưa có câu cần ôn lại.':'Đổi phạm vi hoặc mức luyện để có thêm câu.');
       const count=Number.isInteger(request.count)?Math.min(buPracticeLimit,Math.max(1,request.count)):6;
       const lesson=lessonCatalog[chapter.id].find(l=>l.id===lessonId);
       const now=Date.now();
       const r={id:crypto.randomUUID(),chapterId:chapter.id,chapters:all?scope:undefined,lessonId,
         title:all?'Luyện tổng hợp · Toán '+grade:lesson?.title||chapter.title,
-        grade:chapter.grade,mode:review?'review':'practice',type,ids:select(pool,count,levels,marks,review,recentQuestions(current),type==='mixed'),
+        grade:chapter.grade,mode:review?'review':'practice',type,ids:review?select(pool,count,levels,marks,true):
+          selectPractice(pool,count,levels,marks,recentQuestions(current),type==='mixed'),
         started:now,updated:now,drafts:{},feedback:{},hints:[]};
       current.runs.unshift(r);
       save(current);
@@ -453,7 +508,7 @@ const buStudy = (() => {
       const feedback=r.feedback[qid] ||= grade(data.questions[qid],response,r.hints.includes(qid));
       delete r.drafts[qid];
       r.updated=Date.now();
-      record(current,r,data.questions[qid],feedback,data.chapterIds.includes(qid)||data.reviewedIds?.includes(qid));
+      record(current,r,data.questions[qid],feedback,!r.lessonId||data.chapterIds.includes(qid)||data.reviewedIds?.includes(qid));
       save(current);
       const chapter=chapters.get(data.questions[qid].chapterId||r.chapterId);
       return {feedback,chapterProgress:progress(current,chapter),lessonProgress:r.lessonId?lessonProgress(current,chapter,r.lessonId):null};
@@ -476,7 +531,7 @@ const buStudy = (() => {
         const mark=grade(data.questions[qid],drafts?.[qid]??r.drafts[qid],r.hints.includes(qid),true);
         r.feedback[qid]=mark;
         if(!r.paperId&&(mark.complete||mark.parts?.some(p=>p.selected!==null)))record(current,r,data.questions[qid],mark,
-          data.chapterIds.includes(qid)||data.reviewedIds?.includes(qid));
+          (r.mode==='practice'&&!r.lessonId)||data.chapterIds.includes(qid)||data.reviewedIds?.includes(qid));
       }
       const details=Object.values(r.feedback);
       const correct=details.reduce((n,p)=>n+p.correct,0),total=details.reduce((n,p)=>n+p.units,0);
