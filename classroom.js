@@ -11,33 +11,66 @@ const buClassroom = (() => {
     } catch {}
     return '';
   }
-  function mount(panel,chapter) {
+  function renderAccess(panel,{portal=false,afterLogin}) {
+    const credentialId=portal?'portalClassCredential':'classCredential';
+    const registration=labelLink();
+    panel.innerHTML='<section class="replay-card">'+(portal?'':'<h3>Xem lại buổi học</h3>')+
+      '<p>Video, tài liệu và bài tập dành cho học viên đang học online.</p>'+
+      (buClassApi.base?'<form class="class-login"><label for="'+credentialId+'">Mật khẩu lớp</label>'+
+        '<input id="'+credentialId+'" name="password" type="password" autocomplete="current-password" required maxlength="180" placeholder="Nhập mật khẩu giáo viên đã cấp">'+
+        '<button class="btn" type="submit">Mở tài liệu lớp</button></form>':
+        '<p class="online-status" role="status">Kho tài liệu và bài tập của lớp đang chờ kết nối máy chủ.</p>')+
+      (registration?'<div class="online-actions">'+registration+'</div>':'')+
+      '<p class="login-error" data-class-status role="status"></p></section>';
+    const form=panel.querySelector('form');
+    if(!form) return;
+    form.onsubmit=async event=>{
+      event.preventDefault();
+      const submit=form.querySelector('button');
+      submit.disabled=true;
+      try {
+        const result=await buClassApi.request('login',{role:'student',password:new FormData(form).get('password')});
+        token=result.token;
+        classGrade=Number(result.grade);
+        afterLogin();
+      } catch(error) {showError(panel,error);}
+      finally {submit.disabled=false;}
+    };
+  }
+  function mountPortal(panel) {
     if(!token) {
-      panel.innerHTML='<section class="replay-card"><h3>Xem lại buổi học</h3><p>Video, ghi chú và PDF theo từng buổi đã học.</p>'+
-        (buClassApi.base?'<form class="class-login"><label for="classCredential">Mật khẩu lớp</label><input id="classCredential" name="password" type="password" autocomplete="current-password" required maxlength="180"><button class="btn" type="submit">Mở tài liệu lớp</button></form>':
-          '<p class="sub">Giáo viên chưa kết nối kho tài liệu lớp.</p>')+labelLink()+
-        '<p class="login-error" data-class-status role="status"></p></section>';
-      const form=panel.querySelector('form');
-      if(form) form.onsubmit=async e=>{
-        e.preventDefault();
-        const submit=form.querySelector('button');
-        submit.disabled=true;
-        try {
-          const result=await buClassApi.request('login',{role:'student',password:new FormData(form).get('password')});
-          token=result.token;classGrade=result.grade;
-          mount(panel,chapter);
-        } catch(error) {showError(panel,error);}
-        finally {submit.disabled=false;}
-      };
+      renderAccess(panel,{portal:true,afterLogin:()=>mountPortal(panel)});
       return;
     }
+    const chapters=buCurriculum.find(group=>group.grade===classGrade)?.chapters||[];
+    if(!chapters.length) {
+      token='';
+      mountPortal(panel);
+      showError(panel,new Error('Lớp này chưa có danh mục chương.'));
+      return;
+    }
+    panel.innerHTML='<div class="online-classbar"><label for="onlineChapter">Chương học · Toán '+classGrade+'</label>'+
+      '<select id="onlineChapter">'+chapters.map(chapter=>'<option value="'+esc(chapter.id)+'">'+esc(chapter.title)+'</option>').join('')+
+      '</select></div><div data-online-chapter></div>';
+    const picker=panel.querySelector('#onlineChapter');
+    const content=panel.querySelector('[data-online-chapter]');
+    const showChapter=()=>mount(content,{id:picker.value,grade:classGrade},()=>mountPortal(panel));
+    picker.onchange=showChapter;
+    showChapter();
+  }
+  function mount(panel,chapter,onExit=()=>mount(panel,chapter)) {
+    if(!token) {
+      renderAccess(panel,{afterLogin:()=>mount(panel,chapter,onExit)});
+      return;
+    }
+    const logout=()=>{token='';onExit();};
     if(chapter.grade!==classGrade) {
       panel.innerHTML='<section class="replay-card"><h3>Xem lại buổi học</h3><p>Tài khoản lớp thuộc Toán '+classGrade+'.</p><button class="btn secondary" data-class-exit>Đổi mật khẩu lớp</button></section>';
-      panel.querySelector('[data-class-exit]').onclick=()=>{token='';mount(panel,chapter);};
+      panel.querySelector('[data-class-exit]').onclick=logout;
       return;
     }
     panel.innerHTML='<section class="replay-card"><p data-class-status role="status">Đang tải tài liệu lớp…</p><button class="btn secondary" data-class-exit>Thoát tài khoản lớp</button></section>';
-    panel.querySelector('[data-class-exit]').onclick=()=>{token='';mount(panel,chapter);};
+    panel.querySelector('[data-class-exit]').onclick=logout;
     const marker=panel.firstElementChild;
     buClassApi.request('student/chapter',{chapter:chapter.id},token).then(data=>{
       if(!marker.isConnected||panel.firstElementChild!==marker||panel.hidden) return;
@@ -53,7 +86,7 @@ const buClassroom = (() => {
         '<h3>Bài được giao</h3>'+(data.assignments.length?data.assignments.map(a=>'<button class="btn secondary" data-assignment-open="'+esc(a.id)+'">'+esc(a.title)+
           ' · '+(a.result?esc(a.result.score+' điểm'):esc(a.questions+' câu'+(a.due?' · '+a.due:'')))+'</button>').join(''):'<p class="sub">Chương này chưa có bài được giao.</p>')+
         '<p class="login-error" data-class-status role="status"></p><button class="btn secondary" data-class-exit>Thoát tài khoản lớp</button></section>';
-      panel.querySelector('[data-class-exit]').onclick=()=>{token='';mount(panel,chapter);};
+      panel.querySelector('[data-class-exit]').onclick=logout;
       panel.querySelectorAll('[data-material]').forEach(b=>b.onclick=async()=>{
         b.disabled=true;
         try {
@@ -68,10 +101,10 @@ const buClassroom = (() => {
         } catch(error) {showError(panel,error);}
         finally {b.disabled=false;}
       });
-      panel.querySelectorAll('[data-assignment-open]').forEach(b=>b.onclick=()=>assignment(panel,chapter,b.dataset.assignmentOpen));
+      panel.querySelectorAll('[data-assignment-open]').forEach(b=>b.onclick=()=>assignment(panel,b.dataset.assignmentOpen,()=>mount(panel,chapter,onExit)));
     }).catch(error=>showError(panel,error));
   }
-  async function assignment(panel,chapter,id) {
+  async function assignment(panel,id,goBack) {
     const marker=panel.firstElementChild;
     try {
       const data=await buClassApi.request('student/assignment',{id},token);
@@ -81,7 +114,7 @@ const buClassroom = (() => {
       const showResult=result=>{
         panel.innerHTML='<section class="replay-card">'+top+'<p><strong>'+esc(result.score)+'/10</strong> · '+esc(result.correct)+'/'+esc(result.total)+' ý đúng</p>'+
           result.details.map((r,i)=>'<details><summary>Câu '+(i+1)+' · '+esc(r.correct+'/'+r.units)+' ý đúng</summary><p>'+quizMath(r.explanation)+'</p></details>').join('')+'</section>';
-        panel.querySelector('[data-back-to-class]').onclick=()=>mount(panel,chapter);
+        panel.querySelector('[data-back-to-class]').onclick=goBack;
       };
       if(data.result) {showResult(data.result);return;}
       const options=(key,values)=>values.map((v,i)=>'<label><input type="radio" name="'+esc(key)+'" value="'+i+'"> '+quizMath(v)+'</label>').join('');
@@ -90,7 +123,7 @@ const buClassroom = (() => {
           (q.type==='mcq'?options(q.id,q.options):q.type==='tf'?q.statements.map((s,j)=>'<p>'+quizMath(s.text)+'</p>'+figureHTML(s.figure)+options(q.id+'-'+j,['Đúng','Sai'])).join(''):
             '<label>Đáp án <input name="'+esc(q.id)+'" inputmode="decimal" maxlength="48"></label>')+'</fieldset>').join('')+
         '<button type="submit" class="btn">Nộp bài được giao</button><p class="login-error" data-class-status role="status"></p></form></section>';
-      panel.querySelector('[data-back-to-class]').onclick=()=>mount(panel,chapter);
+      panel.querySelector('[data-back-to-class]').onclick=goBack;
       const form=panel.querySelector('form');
       form.onsubmit=async e=>{
         e.preventDefault();
@@ -110,5 +143,5 @@ const buClassroom = (() => {
       };
     } catch(error) {showError(panel,error);}
   }
-  return {mount};
+  return {mount,mountPortal};
 })();

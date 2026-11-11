@@ -89,7 +89,7 @@
   function questions(){
     $('picked').textContent=selection.size+' câu đã chọn';
     $('bank').innerHTML=filtered().map(q=>'<label class="choice"><input type="checkbox" data-q="'+esc(q.id)+'" '+(selection.has(q.id)?'checked':'')+
-      '><span><strong>'+esc(names[q.type])+'</strong> · '+esc(q.tags.map(t=>names[t]).join(' / '))+'<br>'+esc(q.prompt)+'</span></label>').join('')||
+      '><span><strong>'+esc(names[q.type])+'</strong> · '+esc(q.tags.map(t=>names[t]).join(' / '))+'<br>'+buMath.render(q.prompt).replace(/\n/g,'<br>')+'</span></label>').join('')||
       '<p class="muted">Hãy đổi bộ lọc để xem các câu khác.</p>';
   }
   function assignments(){
