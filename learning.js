@@ -98,7 +98,7 @@ function renderExam() {
     '<p>Tạo bài theo chương, bài học hoặc chọn kỳ kiểm tra.</p></div>'+gradeField(grade,'examGrade')+'</div>'+
     '<div class="exam-tools"><div class="exam-switch" role="group" aria-label="Chế độ luyện thi">'+
     '<button type="button" data-mode="custom">Theo chương và bài</button><button type="button" data-mode="semester">Giữa kỳ và cuối kỳ</button>'+
-    '<button type="button" data-mode="library">Kho đề và tài liệu</button></div>'+
+    '<button type="button" data-mode="papers">Đề theo trường</button><button type="button" data-mode="library">Kho đề và tài liệu</button></div>'+
     '<div class="exam-links"><button type="button" id="examMistakes">Sổ lỗi</button><button type="button" id="examHistory">Kết quả</button></div></div>'+
     (active.length?'<details class="exam-saved"><summary>Bài đang làm ('+active.length+')</summary>'+
       active.map(run=>'<button type="button" data-exam-resume="'+esc(run.id)+'">'+esc(run.title)+' · '+run.count+' câu '+icon('arrow')+'</button>').join('')+'</details>':'')+
@@ -110,10 +110,30 @@ function renderExam() {
   $$('[data-mode]').forEach(b=>b.onclick=()=>{learningOptions.mode=b.dataset.mode;renderExamOptions(chapters);});
   renderExamOptions(chapters);
 }
+function renderReferencePapers(grade) {
+  const papers=buExamPapers.filter(p=>p.grade===grade);
+  $('#examContent').innerHTML='<section class="exam-original exam-library"><h2>Đề thực hành theo trường</h2>'+
+    (papers.length?papers.map(paper=>'<article class="reference-paper"><h3>'+esc(paper.title)+'</h3><p>'+esc(paper.scope)+'</p>'+
+      '<small>'+paper.questions.length+' câu · '+paper.minutes+' phút · Câu hỏi biên soạn theo đề tham khảo</small>'+
+      '<div class="reference-actions"><button class="btn" type="button" data-reference-paper="'+esc(paper.id)+'">Làm đề trên web '+icon('arrow')+'</button>'+
+      '<a class="btn secondary" href="'+esc(paper.source)+'" target="_blank" rel="noopener noreferrer">Xem đề gốc TOANMATH ↗</a></div></article>').join(''):
+      '<p>Đề theo trường hiện có cho lớp 6–12.</p>')+'</section>';
+  $$('[data-reference-paper]').forEach(button=>button.onclick=async()=>{
+    if(state.opening)return;
+    state.opening=true;
+    try {
+      await busy(button,'Đang mở đề…',async()=>{
+        const quiz=await rpc('startReferencePaper',state.token,button.dataset.referencePaper);
+        if(state.page==='exam'&&button.isConnected)openQuiz(quiz);
+      });
+    } finally {state.opening=false;}
+  });
+}
 function renderExamOptions(chapters) {
   const semester=learningOptions.mode==='semester';
   $$('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===learningOptions.mode)));
   if(learningOptions.mode==='library'){renderExamLibrary(state.user.grade);return;}
+  if(learningOptions.mode==='papers'){renderReferencePapers(state.user.grade);return;}
   const chapter=chapters.find(c=>c.id===learningOptions.chapter);
   const lessons=lessonCatalog[chapter.id];
   const lesson=lessons.find(item=>item.id===learningOptions.lesson);
@@ -146,16 +166,25 @@ function renderExamOptions(chapters) {
   function selectedChapters() {
     return semester?[...form.querySelectorAll('[name=chapter]:checked')].map(el=>el.value):[chapter.id];
   }
-  function counts() {
-    const key=Object.keys(practiceLevels).filter(t=>state.levels.includes(t)).join('|');
-    const pool=semester?chapters.filter(c=>selectedChapters().includes(c.id)):[lesson||chapter];
-    const available=pool.reduce((sum,item)=>sum+(key?item.formats.levels[key]?.[state.format]||0:item.formats[state.format]||0),0);
-    const max=Math.min(20,available);
-    const select=$('#examCount');
-    if(max&&!Array.from({length:max},(_,i)=>i+1).includes(state.count))state.count=max;
-    select.innerHTML=Array.from({length:max},(_,i)=>'<option '+(i+1===state.count?'selected':'')+'>'+(i+1)+'</option>').join('');
-    $('#examStart').disabled=!available;
-    $('#examAvailable').textContent=available?available+' câu phù hợp':semester&&!pool.length?'Chọn chương để tạo đề.':'Hãy đổi hình thức hoặc mức độ.';
+  let countRequest=0;
+  async function counts() {
+    const request=++countRequest, scope=selectedChapters();
+    const select=$('#examCount'), start=$('#examStart'), status=$('#examAvailable');
+    start.disabled=true;
+    select.disabled=true;
+    if(!scope.length){select.innerHTML='';status.textContent='Chọn chương để tạo đề.';return;}
+    status.textContent='Đang kiểm tra số câu…';
+    try {
+      const available=await rpc('exerciseAvailability',state.token,{chapters:scope,lessonId:semester?'':lesson?.id||'',type:state.format,levels:state.levels});
+      if(!form.isConnected||request!==countRequest)return;
+      const max=Math.min(20,available);
+      if(max)state.count=Math.max(1,Math.min(max,state.count));
+      select.innerHTML=Array.from({length:max},(_,i)=>'<option '+(i+1===state.count?'selected':'')+'>'+(i+1)+'</option>').join('');
+      start.disabled=select.disabled=!available;
+      status.textContent=available?available+' câu phù hợp':'Hãy đổi hình thức hoặc mức độ.';
+    } catch(error) {
+      if(form.isConnected&&request===countRequest)status.textContent=error.message;
+    }
   }
   form.onchange=e=>{
     const target=e.target;
@@ -165,7 +194,7 @@ function renderExamOptions(chapters) {
     if(target.name==='chapter')learningOptions.selected=selectedChapters();
     if(target.name==='level')state.levels=[...form.querySelectorAll('[name=level]:checked')].map(el=>el.value);
     if(target.id==='examFormat')state.format=target.value;
-    if(target.id==='examCount')state.count=Number(target.value);
+    if(target.id==='examCount'){state.count=Number(target.value);return;}
     counts();
   };
   form.onsubmit=async event=>{

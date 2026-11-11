@@ -186,3 +186,6 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .book-written { display:grid;gap:5px; }
 .book-written textarea { width:100%;padding:8px;border:1px solid #a8c6b1;border-radius:6px;resize:vertical;font:inherit; }
 .book-written-response { white-space:pre-wrap;overflow-wrap:anywhere; }
+.reviewed-source { margin:13px 0 0;color:#476352;font-size:.86em; }
+.reviewed-source a { color:inherit;text-underline-offset:3px; }
+.no-extra-practice { display:none; }

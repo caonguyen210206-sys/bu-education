@@ -104,6 +104,11 @@
 .library-filters { display:grid;grid-template-columns:minmax(170px,2fr) repeat(3,minmax(110px,1fr));gap:10px;margin-top:14px; }
 .library-filters input { min-width:0;width:100%;font:inherit;color:inherit;border:1px solid #d5e2d6;border-radius:9px;background:#fff;padding:8px 10px; }
 .library-count { margin:10px 0 7px; }
+.reference-paper { margin-top:14px;padding:16px 0 4px;border-top:1px solid #e3ece3; }
+.reference-paper h3,.reference-paper p { margin:0 0 6px; }
+.reference-paper small { display:block;color:#4a6254; }
+.reference-actions { display:flex;gap:8px;flex-wrap:wrap;margin-top:11px; }
+.reference-actions a { text-decoration:none; }
 @media(max-width:680px) { .library-filters { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:380px) { .library-filters>label:first-child { grid-column:1/-1; } }
 .timer-low { color:#932d20;background:#fee5de; }

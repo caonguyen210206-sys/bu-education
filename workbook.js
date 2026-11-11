@@ -29,7 +29,8 @@ function workbookLessons(chapter) {
   if(!map) return [{id:'',title:formatChapter(chapter),topics}];
   const lessons=lessonCatalog[chapter.id].filter(l=>!/^Luyện tập chung|^Bài tập cuối|^Bài tập ôn/iu.test(l.title));
   return lessons.map((lesson,index)=>({
-    id:lesson.id,title:bookTitleFixes[lesson.id]||lesson.title.replace(/^Bài (\d+):/u,'Bài $1.'),topics:topics.filter((_,i)=>map[i]===index),extra:buLessonExtras[lesson.id]
+    id:lesson.id,title:bookTitleFixes[lesson.id]||lesson.title.replace(/^Bài (\d+):/u,'Bài $1.'),topics:topics.filter((_,i)=>map[i]===index),
+    extra:buLessonExtras[lesson.id],review:buReviewedLessons[lesson.id]
   }));
 }
 function bookContentsRow(chapter,index) {
@@ -96,10 +97,10 @@ function bookMethod(method,topic,index,chapter,figures,scope) {
   const practice=bookMethodPractice(chapter.id,key,method);
   const examples=practice.useWorked?worked.slice(0,-1):worked;
   const matched=(topic.notes||[]).find(([,name])=>name===title||name&&title.includes(name));
-  const related=method.formula||matched?.[3]||topic.formula||topic.formulas||'';
+  const related=method.formula||matched?.[3]||'';
   const figure=diagram?studyFigure(diagram):(topic.diagrams?.length===1?studyFigure(topic.diagrams[0]):
     topic.visuals?.length===1?figures[topic.visuals[0]]||'':'');
-  const extra=bookNoteMethods[chapter.id]===title?noteAsExample(buBookNotes[chapter.id]):'';
+  const extra=!method.slug&&bookNoteMethods[chapter.id]===title?noteAsExample(buBookNotes[chapter.id]):'';
   return '<details class="workbook-method" id="'+key+'"><summary><span>Dạng '+index+'</span><strong>'+theoryFormula(title)+'</strong></summary>'+
     '<div class="method-detail">'+paperBody(
       (lead?theoryParagraphs(lead):'')+
@@ -108,13 +109,14 @@ function bookMethod(method,topic,index,chapter,figures,scope) {
       (tip?'<div class="outline-caution"><strong>Lỗi dễ gặp</strong>'+theoryParagraphs(tip)+'</div>':'')+
       (example?'<div class="outline-example"><h5>Ví dụ</h5>'+theoryParagraphs(example)+'</div>':'')+
       examples.map(item=>outlineExample(item,examples.length>1)).join('')+extra,figure)+
-    '<section class="method-practice" aria-label="Bài luyện của dạng"><h5>Bài luyện của dạng</h5><div data-workbook-method="'+key+'"></div></section>'+
+    (method.questions?.length||practice.original.length||method.practice||practice.useWorked?'<section class="method-practice" aria-label="Bài luyện của dạng"><h5>Bài luyện của dạng</h5><div data-workbook-method="'+key+'"></div></section>':'')+
     '</div></details>';
 }
 function lessonSectionHeading(letter,title,id) {
   return '<h3 class="workbook-section-heading" id="'+esc(id)+'"><span>'+letter+'</span>'+esc(title)+'</h3>';
 }
 function getBookMethods(lesson) {
+  if(lesson.review)return lesson.review.methods.map(method=>({topic:{},method}));
   const methods=lesson.topics.flatMap(topic=>topic.methods.map(method=>({topic,method})));
   if(lesson.extra){
     const supplemental=lesson.extra.method;
@@ -126,14 +128,40 @@ function getBookMethods(lesson) {
   return methods;
 }
 function bookMethodPractice(chapterId,scope,method) {
-  const [ids,original]=buBookPractice[chapterId]?.[scope]||[[],[]];
-  const useWorked=Boolean(!method.practice&&!ids.length&&!original.length&&method.worked?.length);
-  return {ids,original,useWorked};
+  if(method.slug)return {original:[],useWorked:false};
+  const original=buBookPractice[chapterId]?.[scope]?.[1]||[];
+  const useWorked=Boolean(!method.practice&&!original.length&&method.worked?.length);
+  return {original,useWorked};
+}
+function reviewedMethodQuestions(chapterId,lesson) {
+  return lesson.review.methods.map(method=>({questions:method.questions.map((q,i)=>({...q,id:lesson.id+'-review-'+method.slug+'-'+(i+1),
+    chapterId,focus:method.title,reviewed:true}))}));
+}
+function reviewedChapterQuestions(chapterId,lesson) {
+  return (lesson.review.drill||[]).map((q,i)=>({...q,id:lesson.id+'-review-drill-'+(i+1),chapterId,reviewed:true}));
+}
+const bookExtraSources={
+  tai8:['Phân dạng Toán 8 · Ngô Đức Tài','https://thcs.toanmath.com/thcs-pdf/ly-thuyet-va-phan-dang-bai-tap-toan-8-hoc-ki-1-ngo-duc-tai.pdf'],
+  duy10:['Phân dạng Toán 10 KNTT · Phạm Lê Duy','https://toanmath.com/toanmath-pdf/cac-dang-bai-tap-mon-toan-10-sach-knttvcs-pham-le-duy.pdf'],
+  duy11:['Phân dạng Toán 11 KNTT · Phạm Lê Duy','https://toanmath.com/toanmath-pdf/cac-dang-bai-tap-mon-toan-11-sach-knttvcs-pham-le-duy.pdf']
+};
+function bookSourceLink(lesson) {
+  const index=buLessonSourcePages[lesson.id];
+  const grade=Number(lesson.id.match(/^g(\d+)/u)?.[1]);
+  const [volume,page]=index||[];
+  const pdf=bookExtraSources[volume]||buBookPDFs[grade]?.[volume-1];
+  const source=lesson.review?.source||(pdf?[pdf[1]+'#page='+page,pdf[0]+' · trang PDF '+page]:null);
+  return source?'<p class="reviewed-source"><a href="'+esc(source[0])+'" target="_blank" rel="noopener noreferrer">'+esc(source[1])+' ↗</a></p>':'';
+}
+function reviewedTheory(lesson) {
+  const {theory,diagram}=lesson.review;
+  return paperBody(theory.map(([title,facts,formula])=>formulaGroupHTML(title,factsHTML(facts)+outlineFormula(formula,new Set()))).join(''),
+    diagram?studyFigure(diagram):'');
 }
 function bookLessonMarkup(lesson,index,chapter,figures) {
   const key=bookLessonKey(lesson,index);
-  const topics=lesson.topics.map(topic=>bookTopic(topic,figures)).join('');
-  const extra=lesson.extra;
+  const topics=lesson.review?reviewedTheory(lesson):lesson.topics.map(topic=>bookTopic(topic,figures)).join('');
+  const extra=lesson.review?null:lesson.extra;
   const supplemental=extra?'<section class="book-topic"><h4>'+theoryFormula(extra.title)+'</h4>'+
     factsHTML(extra.facts)+outlineFormula(extra.formula,new Set())+'</section>':'';
   const methods=getBookMethods(lesson);
@@ -141,9 +169,9 @@ function bookLessonMarkup(lesson,index,chapter,figures) {
     '<div class="workbook-part">'+lessonSectionHeading('A',bookLessonTitles[0],key+'-a')+topics+supplemental+'</div>'+
     (methods.length||lesson.id?'<div class="workbook-part">'+lessonSectionHeading('B',bookLessonTitles[1],key+'-b')+
       methods.map(({topic,method},i)=>bookMethod(method,topic,i+1,chapter,figures,key)).join('')+
-      (lesson.id?'<div data-workbook-model="'+esc(lesson.id)+'"></div>':'')+'</div>':'')+
-    (lesson.id?'<div class="workbook-part">'+lessonSectionHeading('C',bookLessonTitles[2],key+'-c')+
-      '<div data-workbook-scope="'+esc(lesson.id)+'"></div></div>':'')+'</section>';
+      (lesson.id&&!lesson.review?'<div data-workbook-model="'+esc(lesson.id)+'"></div>':'')+'</div>':'')+
+    (lesson.id&&(!lesson.review||lesson.review.drill?.length)?'<div class="workbook-part">'+lessonSectionHeading('C',bookLessonTitles[2],key+'-c')+
+      '<div data-workbook-scope="'+esc(lesson.id)+'"></div></div>':'')+bookSourceLink(lesson)+'</section>';
 }
 function sourceFooter(chapter) {
   const grade=state.user.grade, index=group(grade).chapters.findIndex(c=>c.id===chapter.id);
@@ -169,7 +197,7 @@ function openBookChapter(id) {
       bookLink(key+'-a','A. '+bookLessonTitles[0])+'</li>'+
       (methods.length||lesson.id?'<li>'+bookLink(key+'-b','B. '+bookLessonTitles[1])+'</li>':'')+
       methods.map(({method},j)=>'<li class="toc-method">'+bookLink(key+'-method-'+(j+1),'Dạng '+(j+1)+'. '+method.title)+'</li>').join('')+
-      (lesson.id?'<li>'+bookLink(key+'-c','C. '+bookLessonTitles[2])+'</li>':'')+'</ul></details></li>';
+      (lesson.id&&(!lesson.review||lesson.review.drill?.length)?'<li>'+bookLink(key+'-c','C. '+bookLessonTitles[2])+'</li>':'')+'</ul></details></li>';
   }).join('');
   const note=buBookNotes[id];
   state.page='book';state.chapter=id;
@@ -287,7 +315,7 @@ async function mountBookWorksheets(chapter) {
       const method=items.methods[scope];
       const id=method?.lessonId||panel.dataset.workbookScope||'';
       const set=scope?method?.items||[]:id?items.lessons[id]||[]:items.end;
-      if(!set.length){panel.textContent='Bài luyện của mục này nằm ở phần ôn tập cuối chương.';continue;}
+      if(!set.length){panel.closest('.workbook-part')?.classList.add('no-extra-practice');panel.replaceChildren();continue;}
       panel.replaceChildren(...set.map((item,i)=>{
         const container=document.createElement('div');
         container.className='workbook-exercise';
