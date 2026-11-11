@@ -121,3 +121,7 @@
 .study-share { display:flex;align-items:center;gap:6px;margin-top:20px;color:var(--muted); }
 .study-share input { accent-color:var(--sage); }
 .math-frac .math-prose { font-family:var(--ui-font);font-size:.77em;font-style:normal; }
+.book-progress { grid-column:2/-1;display:flex;align-items:center;gap:8px; }
+.book-progress small { flex:none;font-variant-numeric:tabular-nums;margin:0;font-size:11px; }
+.book-progress-track { flex:1;background:#e4ebe5;border-radius:20px;height:4px;overflow:hidden; }
+.book-progress-track > span { display:block;height:100%;background:var(--sage); }
