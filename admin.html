@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="referrer" content="no-referrer"><title>Quản trị · Bu Education</title>
+<meta name="referrer" content="no-referrer"><title>Cổng Host · Bu Education</title>
 <style>
 :root{color:#233a2d;background:#f3f3e8;font:15px/1.5 system-ui,sans-serif}*{box-sizing:border-box}
 [hidden]{display:none!important}body{max-width:1150px;margin:auto;padding:24px}h1,h2,h3,p{margin:0 0 10px}
@@ -22,15 +22,24 @@ dialog{border:1px solid #b3c8b2;background:#fffdf5;border-radius:12px;max-width:
 dialog::backdrop{background:#18372966}input[type=number]{width:83px}@media(max-width:560px){body{padding:13px}}
 </style>
 <link rel="stylesheet" href="theme.css?v=2">
+<link rel="stylesheet" href="learning.css?v=1">
 </head>
 <body class="admin-page">
-<header><div><span class="muted">BU EDUCATION</span><h1>Quản trị lớp</h1></div><a href="index.html">← Bàn học</a></header>
+<header><div><span class="muted">BU EDUCATION</span><h1>Cổng Host</h1></div><a href="index.html">← Bàn học</a></header>
 <section id="teacherLogin">
  <form id="login"><label>Mật khẩu quản trị<input name="password" type="password" autocomplete="current-password" required maxlength="180"></label>
  <button class="main">Đăng nhập</button></form>
 </section>
 <p id="status" class="status" role="status"></p>
 <div id="workspace" hidden>
+ <nav class="admin-tabs" aria-label="Quản lý"><button type="button" data-host-area="class" aria-pressed="true">Học viên online</button>
+ <button type="button" data-host-area="study" aria-pressed="false">Người dùng tự học</button></nav>
+ <section id="hostStudy" hidden>
+ <h2>Người dùng tự học</h2>
+ <div class="row"><label>Tìm tên<input type="search" id="hostStudySearch"></label><label>Khối lớp<select id="hostStudyGrade"></select></label>
+ <button id="reloadStudy" type="button">Làm mới</button></div>
+ <div id="hostStudyList" class="host-users-table"></div></section>
+ <div id="hostClass">
  <div class="grid">
   <section><h2>Tạo lớp</h2><form id="newRoom"><label>Tên lớp<input name="name" required maxlength="70" placeholder="Toán 8 · Nhóm thứ Ba"></label>
     <label>Khối<select name="grade" id="newGrade"></select></label><button>Tạo lớp</button></form></section>
@@ -65,6 +74,14 @@ dialog::backdrop{background:#18372966}input[type=number]{width:83px}@media(max-w
   </section>
  </div>
 </div>
-<script src="settings.js"></script><script src="data/curriculum.js"></script><script src="class-api.js"></script><script src="math.js?v=2"></script><script src="admin.js?v=2"></script>
+</div>
+<dialog id="moveMaterial" aria-labelledby="moveTitle">
+ <h2 id="moveTitle">Chuyển tài liệu</h2><form id="moveMaterialForm">
+ <label>Chương<select name="chapter" required></select></label>
+ <label>Buổi<input name="session" maxlength="80" required></label>
+ <label>Thứ tự<input name="order" type="number" min="1" max="999" required></label>
+ <div class="row"><button id="cancelMove" type="button">Hủy</button><button class="main">Lưu vị trí</button></div></form>
+</dialog>
+<script src="settings.js"></script><script src="data/curriculum.js"></script><script src="class-api.js"></script><script src="math.js?v=3"></script><script src="admin.js?v=3"></script>
 </body>
 </html>

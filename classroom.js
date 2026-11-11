@@ -102,7 +102,7 @@ const buClassroom = (() => {
         finally {b.disabled=false;}
       });
       panel.querySelectorAll('[data-assignment-open]').forEach(b=>b.onclick=()=>assignment(panel,b.dataset.assignmentOpen,()=>mount(panel,chapter,onExit)));
-    }).catch(error=>showError(panel,error));
+    }).catch(error=>{if(panel.firstElementChild===marker&&marker.isConnected)showError(panel,error);});
   }
   async function assignment(panel,id,goBack) {
     const marker=panel.firstElementChild;
@@ -137,8 +137,10 @@ const buClassroom = (() => {
             return option===null?null:option==='0';
           }):q.type==='mcq'?value===null?null:Number(value):value;
         }
-        try {showResult(await buClassApi.request('student/submit',{id,answers},token));}
-        catch(error){showError(panel,error);}
+        try {
+          const result=await buClassApi.request('student/submit',{id,answers},token);
+          if(form.isConnected)showResult(result);
+        } catch(error){if(form.isConnected)showError(panel,error);}
         finally{submit.disabled=false;}
       };
     } catch(error) {showError(panel,error);}

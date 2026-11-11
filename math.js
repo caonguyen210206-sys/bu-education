@@ -6,7 +6,7 @@ const buMath = (() => {
   const superscript = '⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿᵐ';
   const subscript = '₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎ₙₘ';
   const plainScript = '0123456789+−=()nm';
-  const fractionAtom = String.raw`[−-]?(?:√)?(?:\d+(?:[,.]\d+)?|[A-Z]{2,4}|[a-zA-Zα-ωΑ-Ω]|\([a-zA-Zα-ωΑ-Ω0-9., +−*×^²³-]+\))(?:(?:\^|_)[0-9]+|[⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]+)?`;
+  const fractionAtom = String.raw`[−-]?(?:√)?(?:\d+(?:[,.]\d+)?|[A-Z]{2,4}|(?:\d+)?[a-zA-Zα-ωΑ-Ω]|\([a-zA-Zα-ωΑ-Ω0-9., +−*×^²³-]+\))(?:(?:\^|_)[0-9]+|[⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]+)?`;
   const fractionPattern = new RegExp(String.raw`(?<![\p{L}\p{N}/.,′_^])(${fractionAtom})[ \t]*/[ \t]*(${fractionAtom})(?![\p{L}\p{N}/′_^])`, 'gu');
   const units = /^(?:mm|cm|m|km|g|kg|l|ml)\/(?:s[²³]?|h|min|m²|m³|cm²|cm³)$/i;
   const plainToken = /(?<!\p{L})(?:arcsin|arccos|arctan|sin|cos|tan|cot|log|ln|lim|max|min)(?!\p{L})|(?<!\p{L})[A-Z]{2,4}(?!\p{L})|(?<![\p{L}/])[A-Za-zα-ωΑ-Ω](?:[′']+)?(?![\p{L}/])|\d+(?:[.,]\d+)*|[+−×÷·=≠≤≥≡<>∥⊥∈∉⊂⊄∩∪⇒⇔↔→∑∫∞∠△%°±]/gu;
@@ -27,6 +27,7 @@ const buMath = (() => {
       .replace(/<=>/g, '⇔').replace(/=>/g, '⇒')
       .replace(/<=/g, '≤').replace(/>=/g, '≥').replace(/!=/g, '≠')
       .replace(/⟂/g, '⊥')
+      .replace(/\\(?:times|cdot|sum|mid)(?![A-Za-z])/g, word=>({'\\times':'×','\\cdot':'·','\\sum':'∑','\\mid':'∣'})[word])
       .replace(/(?<=[a-zA-Z0-9])[ \t]*\*[ \t]*(?=[a-zA-Z0-9])/g, ' × ')
       .replace(/(?<=[0-9)²³⁴])-(?=[0-9a-zA-Z(])/g, ' − ')
       .replace(/(?<!\p{L})([a-zA-Zα-ωΑ-Ω])-(?=[0-9(]|[a-zA-Zα-ωΑ-Ω](?!\p{L}))/gu, '$1 − ')
@@ -61,7 +62,7 @@ const buMath = (() => {
     return span('math-root', '<span>√</span>' + span('math-rad', body));
   }
   function format(text) {
-    const pattern = /\\(frac|sqrt|vec|widehat|overrightarrow|overline)(?=\{)|√|([_^])|([⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿᵐ]+)|([₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎ₙₘ]+)/gu;
+    const pattern = /\\(frac|sqrt|vec|widehat|overrightarrow|overline|text)(?=\{)|√|([_^])|([⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿᵐ]+)|([₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎ₙₘ]+)/gu;
     let result = '', end = 0;
     for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
       const next = pattern.lastIndex;
@@ -81,6 +82,7 @@ const buMath = (() => {
         const rendered = format(first.text);
         if (fraction) body = span('math-frac', '<span>' + rendered + '</span><span>' + format(fraction.text) + '</span>');
         else if (match[1] === 'sqrt' || match[0] === '√') body = root(rendered);
+        else if (match[1] === 'text') body = span('math-prose', escapeHTML(first.text));
         else if (match[1] === 'widehat') body = span('math-angle', rendered);
         else if (match[1] === 'overline') body = span('math-bar', rendered);
         else if (match[1] === 'vec' || match[1] === 'overrightarrow') body = span('math-vec', rendered);

@@ -127,8 +127,13 @@ const buStudy = (() => {
   function enter(current) {
     return {token:current.user.id,role:'student',user:current.user,curriculum:groups,dashboard:dashboard(current)};
   }
+  async function runBank(run) {
+    if (!run.chapters) return bank(run.chapterId);
+    const banks = await Promise.all(run.chapters.map(bank));
+    return {questions:Object.assign({},...banks.map(data=>data.questions)),chapterIds:banks.flatMap(data=>data.chapterIds)};
+  }
   function quiz(r,data) {
-    return {...runSummary(r),chapterTitle:chapters.get(r.chapterId).title,deadline:r.started+86400000,
+    return {...runSummary(r),chapterTitle:chapters.get(r.chapterId).title,deadline:r.deadline||r.started+86400000,
       questions:r.ids.map(id=>publicQuestion(data.questions[id])),
       drafts:r.drafts,feedback:Object.values(r.feedback),hints:r.hints};
   }
@@ -161,7 +166,7 @@ const buStudy = (() => {
     return picked;
   }
   function record(current,r,q,mark,whole) {
-    const history=current.marks[r.chapterId]||={};
+    const history=current.marks[q.chapterId||r.chapterId]||={};
     const previous=history[q.id];
     const lessons=previous?.lessons||{};
     if(r.lessonId) lessons[r.lessonId]={correct:mark.correct,units:mark.units};
@@ -186,9 +191,10 @@ const buStudy = (() => {
     logout() { return true; },
     getDashboard(id) { return dashboard(profile(id)); },
     async startQuiz(id,request) {
-      const current=profile(id), chapter=chapters.get(request.chapterId);
-      if(!chapter||chapter.grade!==current.user.grade) throw Error('Chương không thuộc lớp đã chọn.');
+      const chapter=chapters.get(request.chapterId);
+      if(!chapter||chapter.grade!==profile(id).user.grade) throw Error('Chương không thuộc lớp đã chọn.');
       const data=await bank(chapter.id);
+      const current=profile(id);
       const lessonId=request.lessonId||'';
       const ids=lessonId?data.byLesson[lessonId]:data.chapterIds;
       if(!ids) throw Error('Bài học không hợp lệ.');
@@ -210,21 +216,59 @@ const buStudy = (() => {
       save(current);
       return quiz(r,data);
     },
+    async bookExercises(id,chapterId) {
+      const current=profile(id), chapter=chapters.get(chapterId);
+      if(!chapter||chapter.grade!==current.user.grade)throw Error('Chương không thuộc lớp đã chọn.');
+      const data=await bank(chapterId);
+      const used=new Set(), selected=[];
+      for(const type of ['mcq','tf','short']) {
+        const pool=data.chapterIds.map(id=>data.questions[id]).filter(q=>q.type===type);
+        for(const level of tags) {
+          const next=pool.find(q=>q.tags.includes(level)&&!used.has(q.id)&&!selected.some(previous=>previous.focus===q.focus))||
+            pool.find(q=>q.tags.includes(level)&&!used.has(q.id));
+          if(next){selected.push(next);used.add(next.id);}
+        }
+      }
+      return selected;
+    },
+    async startSemester(id,request) {
+      const initial=profile(id);
+      const ids=[...new Set(Array.isArray(request.chapters)?request.chapters:[])];
+      if(!ids.length||ids.some(id=>chapters.get(id)?.grade!==initial.user.grade))throw Error('Chọn chương thuộc khối đang học.');
+      const periods={mid1:'Giữa kỳ I',end1:'Cuối kỳ I',mid2:'Giữa kỳ II',end2:'Cuối kỳ II'};
+      if(!Object.hasOwn(periods,request.period)||![30,45,60,90].includes(request.minutes))throw Error('Kỳ kiểm tra hoặc thời gian không hợp lệ.');
+      const data=await runBank({chapters:ids});
+      const current=profile(id), grade=current.user.grade;
+      const type=format.includes(request.type)?request.type:'mixed';
+      const levels=tags.filter(tag=>request.levels?.includes(tag));
+      const pool=data.chapterIds.map(id=>data.questions[id]).filter(q=>(type==='mixed'||q.type===type)&&
+        (!levels.length||levels.some(tag=>q.tags.includes(tag))));
+      if(!pool.length)throw Error('Không có câu phù hợp với bộ lọc này.');
+      const count=Number.isInteger(request.count)?Math.min(20,Math.max(1,request.count)):6;
+      const marks=Object.assign({},...ids.map(chapter=>current.marks[chapter]));
+      const now=Date.now();
+      const r={id:crypto.randomUUID(),chapterId:ids[0],chapters:ids,lessonId:'',title:periods[request.period]+' · Toán '+grade,
+        grade,mode:'semester',period:request.period,type,ids:select(pool,count,levels,marks,false),started:now,
+        deadline:now+request.minutes*60000,updated:now,drafts:{},feedback:{},hints:[]};
+      current.runs.unshift(r);
+      save(current);
+      return quiz(r,data);
+    },
     async resumeQuiz(id,runId) {
-      const current=profile(id),r=activeRun(current,runId),data=await bank(r.chapterId);
+      const current=profile(id),r=activeRun(current,runId),data=await runBank(r);
       return r.result?{finished:true,result:makeResult(r,data)}:quiz(r,data);
     },
     async getHint(id,runId,qid) {
-      const first=activeRun(profile(id),runId),data=await bank(first.chapterId);
+      const first=activeRun(profile(id),runId),data=await runBank(first);
       const current=profile(id),r=activeRun(current,runId);
-      if(r.result||!r.ids.includes(qid)) throw Error('Câu hỏi không thuộc lượt luyện.');
+      if(r.result||r.mode==='semester'||!r.ids.includes(qid)) throw Error('Câu hỏi không thuộc lượt luyện.');
       if(!r.hints.includes(qid)) {r.hints.push(qid);save(current);}
       return {hint:data.questions[qid].hint||data.questions[qid].rule||'Đọc lại điều kiện của đề.'};
     },
     async answerQuestion(id,runId,qid,response) {
-      const first=activeRun(profile(id),runId),data=await bank(first.chapterId);
+      const first=activeRun(profile(id),runId),data=await runBank(first);
       const current=profile(id),r=activeRun(current,runId);
-      if(r.result||!r.ids.includes(qid)) throw Error('Câu hỏi không thuộc lượt luyện.');
+      if(r.result||r.mode==='semester'||!r.ids.includes(qid)) throw Error('Câu hỏi không thuộc lượt luyện.');
       const feedback=r.feedback[qid] ||= grade(data.questions[qid],response,r.hints.includes(qid));
       delete r.drafts[qid];
       r.updated=Date.now();
@@ -244,7 +288,7 @@ const buStudy = (() => {
     },
     pauseQuiz(id,runId,patch) { return methods.saveProgress(id,runId,patch); },
     async submitQuiz(id,runId,drafts) {
-      const first=activeRun(profile(id),runId),data=await bank(first.chapterId);
+      const first=activeRun(profile(id),runId),data=await runBank(first);
       const current=profile(id),r=activeRun(current,runId);
       if(r.result) return makeResult(r,data);
       for(const qid of r.ids) if(!r.feedback[qid]) {
@@ -255,7 +299,7 @@ const buStudy = (() => {
       const details=Object.values(r.feedback);
       const correct=details.reduce((n,p)=>n+p.correct,0),total=details.reduce((n,p)=>n+p.units,0);
       r.updated=Date.now();
-      r.result={id:r.id,chapterId:r.chapterId,title:r.title,grade:r.grade,correct,total,
+      r.result={id:r.id,chapterId:r.chapterId,chapterIds:r.chapters,period:r.period,lessonId:r.lessonId,mode:r.mode,title:r.title,grade:r.grade,correct,total,
         score:Math.round(correct/total*100)/10,seconds:Math.floor((r.updated-r.started)/1000),finishedAt:new Date(r.updated).toISOString()};
       r.drafts={};
       current.runs=current.runs.filter(r=>!r.result||current.runs.filter(x=>x.result).indexOf(r)<30);
@@ -265,7 +309,7 @@ const buStudy = (() => {
     async getResult(id,runId) {
       const r=activeRun(profile(id),runId);
       if(!r.result) throw Error('Bài vẫn đang làm.');
-      return makeResult(r,await bank(r.chapterId));
+      return makeResult(r,await runBank(r));
     },
     async getMistakes(id,chapterId) {
       const current=profile(id),found=[];
@@ -284,7 +328,7 @@ const buStudy = (() => {
     }
   };
   function makeResult(r,data) {
-    return {...r.result,details:r.ids.map(id=>r.feedback[id]||grade(data.questions[id],null,false,true))};
+    return {chapterIds:r.chapters,period:r.period,lessonId:r.lessonId,mode:r.mode,...r.result,details:r.ids.map(id=>r.feedback[id]||grade(data.questions[id],null,false,true))};
   }
   return {call(method,...args) {
     if(!Object.hasOwn(methods,method)) return Promise.reject(Error('Tính năng cần kết nối máy chủ của lớp.'));

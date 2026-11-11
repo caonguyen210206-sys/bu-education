@@ -25,7 +25,26 @@
     if(data.rooms.some(r=>r.id===old)) $('room').value=old;
     $('sync').disabled=!data.driveReady;
     $('syncStatus').textContent=data.driveReady?(data.syncedAt?'Cập nhật '+new Date(data.syncedAt).toLocaleString('vi-VN'):'Chưa đồng bộ'):'Chưa cấu hình thư mục Drive';
+    renderStudyProfiles();
     await showRoom();
+  }
+  function renderStudyProfiles() {
+    const query=$('hostStudySearch').value.trim().toLocaleLowerCase('vi');
+    const grade=Number($('hostStudyGrade').value);
+    const list=(data.studyProfiles||[]).filter(profile=>(!grade||grade===profile.grade)&&profile.name.toLocaleLowerCase('vi').includes(query))
+      .sort((a,b)=>b.updated.localeCompare(a.updated));
+    const chapterList=profile=>buCurriculum.find(group=>group.grade===profile.grade)?.chapters||[];
+    const chapterTitle=(profile,id)=>chapterList(profile).find(c=>c.id===id)?.title||id;
+    $('hostStudyList').innerHTML=list.length?'<table><thead><tr><th>Hồ sơ</th><th>Tiến độ</th><th>Hoạt động gần nhất</th><th>Đồng bộ</th></tr></thead><tbody>'+
+      list.map(profile=>'<tr><td><strong>'+esc(profile.name)+'</strong><br>Lớp '+profile.grade+'</td>'+
+      '<td><details><summary>'+profile.done+' câu · đúng '+profile.accuracy+'%</summary>'+
+      profile.chapters.filter(c=>c.done).map(c=>'<div>'+esc(chapterTitle(profile,c.id))+' · '+c.done+'/'+c.total+'</div>').join('')+'</details></td>'+
+      '<td>'+esc(new Date(profile.updated).toLocaleString('vi-VN'))+'</td><td><button type="button" data-study-block="'+esc(profile.id)+'" data-blocked="'+profile.blocked+'">'+
+      (profile.blocked?'Mở lại':'Tắt đồng bộ')+'</button></td></tr>').join('')+'</tbody></table>':'<p>Chưa có hồ sơ tự học phù hợp.</p>';
+    for(const button of $('hostStudyList').querySelectorAll('[data-study-block]'))button.onclick=guard(async()=>{
+      await call('study-profile',{id:button.dataset.studyBlock,blocked:button.dataset.blocked!=='true'});
+      await refresh();
+    });
   }
   async function showRoom(){
     const r=room();
@@ -55,6 +74,24 @@
       '<label class="choice"><input type="checkbox" data-file="'+esc(f.id)+'" '+(chosenFiles.has(f.id)?'checked':'')+
       '><span>'+esc(f.name)+' <small class="muted">'+esc(f.kind)+'</small></span></label>').join('')||'<p class="muted">Chưa có tệp phù hợp.</p>';
   }
+  function movePlacement(placement) {
+    const picker=$('moveMaterial'), form=$('moveMaterialForm');
+    form.elements.chapter.innerHTML=buCurriculum.find(group=>group.grade===room().grade).chapters.map(c=>choice(c.id,c.title)).join('');
+    form.elements.chapter.value=placement.chapter;
+    form.elements.session.value=placement.session;
+    form.elements.order.value=placement.order;
+    form.onsubmit=guard(async event=>{
+      event.preventDefault();
+      const values=formData(form);
+      await call('material',{id:placement.id,...values});
+      picker.close();
+      await refresh();
+      tell('Đã cập nhật vị trí tài liệu.');
+    });
+    picker.showModal();
+  }
+  const formData=form;
+  $('cancelMove').onclick=()=>$('moveMaterial').close();
   function placements(){
     const found=new Map(), context=sessionKey();
     for(const p of data.placements.filter(p=>p.roomId===context.roomId&&p.chapter===context.chapter).sort((a,b)=>a.order-b.order)){
@@ -64,12 +101,13 @@
     const byId=new Map(data.files.map(f=>[f.id,f]));
     $('placed').innerHTML=[...found].map(([name,list])=>'<details open><summary>'+esc(name)+'</summary>'+
       list.map(p=>'<div class="row"><label>Thứ tự <input type="number" min="1" max="999" value="'+p.order+'" data-order="'+esc(p.id)+'"></label><span>'+esc(byId.get(p.fileId)?.name||'File đã rời thư mục Drive')+'</span>'+
-        '<small class="muted">'+(p.published?'Đã mở':'Bản nháp')+'</small><button data-unplace="'+esc(p.id)+'">Bỏ xếp</button></div>').join('')+
+        '<small class="muted">'+(p.published?'Đã mở':'Bản nháp')+'</small><button data-move="'+esc(p.id)+'">Chuyển chương / buổi</button><button data-unplace="'+esc(p.id)+'">Bỏ xếp</button></div>').join('')+
       '<button data-open-session="'+esc(name)+'">Mở xem lại</button> <button data-close-session="'+esc(name)+'">Đóng xem lại</button></details>').join('')||
       '<p class="muted">Chưa xếp tài liệu vào chương này.</p>';
     for(const field of $('placed').querySelectorAll('[data-order]')) field.onchange=guard(async()=>{
       await call('material',{id:field.dataset.order,order:Number(field.value)});await refresh();
     });
+    for(const b of $('placed').querySelectorAll('[data-move]')) b.onclick=()=>movePlacement(data.placements.find(p=>p.id===b.dataset.move));
     for(const b of $('placed').querySelectorAll('[data-unplace]')) b.onclick=guard(async()=>{
       await call('material',{id:b.dataset.unplace,remove:true});await refresh();
     });
@@ -131,6 +169,15 @@
     e.target.elements.name.value='';
     await refresh();
   });
+  $('hostStudyGrade').innerHTML=choice('','Tất cả')+buCurriculum.map(g=>choice(g.grade,'Lớp '+g.grade)).join('');
+  $('hostStudySearch').oninput=$('hostStudyGrade').onchange=renderStudyProfiles;
+  $('reloadStudy').onclick=guard(refresh);
+  for(const button of document.querySelectorAll('[data-host-area]'))button.onclick=()=>{
+    const study=button.dataset.hostArea==='study';
+    $('hostClass').hidden=study;
+    $('hostStudy').hidden=!study;
+    for(const tab of document.querySelectorAll('[data-host-area]'))tab.setAttribute('aria-pressed',String(tab===button));
+  };
   $('room').onchange=guard(showRoom);
   $('chapter').onchange=guard(showChapter);
   $('sync').onclick=guard(async()=>{
