@@ -298,6 +298,85 @@ const buPracticeAdditions = (() => {
     sa('Tia Oz nằm trong góc xOy. Biết xOz = 37° và zOy = 68°. Tính xOy theo độ.',105,'Cộng 37° và 68°.'),
     sa('Trong một góc vuông xOy, tia Oz tạo với Ox một góc 28°. Tia Oz nằm trong góc xOy. Tính góc zOy theo độ.',62,'Lấy 90° trừ 28°.'),
     mc('Cùng dùng một tia làm cạnh mốc, cạnh còn lại nằm về phía vạch 0° nào thì đọc thế nào?',['Đọc từ vạch 0° trùng tia mốc','Luôn đọc hàng số phía trong','Luôn đọc hàng số phía ngoài','Luôn đọc số lớn hơn'],'Đọc đúng chiều kể từ tia mốc để tránh lấy góc bù.','trap'));
+  // Ngô Đức Tài, Bộ đề ôn theo chương HK1 Toán 7, Chương 1, Đề 1.
+  const rationalLine={
+    type:'numberLine',ticks:17,showAllTicks:true,
+    above:[[0,'A'],[6,'B'],[8,'O'],[11,'C'],[16,'D']],
+    below:[[2,'−1'],[5,'−1/2'],[10,'1/3'],[14,'1']],
+    description:'Trục số chia đều 17 vạch. Từ trái sang phải, các vạch có nhãn là vạch 1: A, 3: −1, 6: −1/2, 7: B, 9: O, 11: 1/3, 12: C, 15: 1, 17: D.'
+  };
+  const comparisonLine={
+    type:'numberLine',ticks:11,above:[[2,'b'],[7,'a']],below:[[5,'O']],
+    description:'Trên trục số, các điểm theo thứ tự từ trái sang phải là b, O, a.'
+  };
+  const comparisonAnswer='Nhập −1 nếu x < y, 0 nếu x = y, hoặc 1 nếu x > y.';
+  a('g7-c1','g7-b1',
+    mc('Tập hợp số hữu tỉ được kí hiệu là',['ℚ','ℕ','ℤ','ℝ'],
+      'ℚ kí hiệu tập hợp các số hữu tỉ. ℕ, ℤ và ℝ lần lượt kí hiệu tập hợp các số tự nhiên, số nguyên và số thực.','recognize'),
+    mc('Cách viết nào mô tả đầy đủ tập hợp số hữu tỉ?',['a/b với a, b ∈ ℤ và b ≠ 0','a/b với a, b ∈ ℤ','a/b với a, b ∈ ℕ','a/b với a, b ∈ ℕ và b ≠ 0'],
+      'Tử và mẫu đều là số nguyên, mẫu phải khác 0. Dùng cả các số nguyên âm để biểu diễn được số hữu tỉ âm.','recognize'),
+    mc('Biểu thức nào sau đây không biểu diễn một số hữu tỉ?',['3/0','−1/2','3 5/8','1,5'],
+      '3/0 không xác định vì mẫu bằng 0. Hỗn số 3 5/8 bằng 29/8 và 1,5 bằng 3/2.','trap'),
+    mc('Trên trục số, các điểm B và C lần lượt biểu diễn những số hữu tỉ nào?',['−1/3 và 1/2','1/3 và 1/2','−1/3 và 1/4','−1/3 và 1/6'],
+      'Từ O đến 1 có 6 khoảng bằng nhau. B nằm bên trái O 2 khoảng, C nằm bên phải O 3 khoảng.','apply',rationalLine),
+    mc('Số đối của số hữu tỉ 7/2 là',['−7/2','2/7','−2/7','3,5'],
+      'Hai số đối nhau có tổng bằng 0. Ta có 7/2 + (−7/2) = 0.','recognize'),
+    mc('Số hữu tỉ có thể xuất hiện dưới những dạng nào dưới đây? Chọn phương án đầy đủ nhất.',[
+      'Cả ba dạng được liệt kê','Số thập phân viết được dưới dạng phân số thập phân','Số nguyên','Hỗn số'
+    ],'Số nguyên viết được với mẫu 1, hỗn số đổi được thành phân số và phân số thập phân có mẫu là lũy thừa của 10.','recognize'),
+    mc('Hai điểm biểu diễn hai số hữu tỉ khác 0 đối nhau có vị trí thế nào? Chọn mô tả đầy đủ nhất.',[
+      'Nằm ở hai phía của O và cách O một khoảng bằng nhau','Nằm cùng phía so với O','Nằm ở hai phía của O','Trùng nhau'
+    ],'Hai số khác 0 đối nhau trái dấu và có cùng khoảng cách đến 0.','trap'),
+    mc('Điểm nào biểu diễn số đối của −1/2?',['Điểm C','Điểm A','Điểm B','Điểm D'],
+      'Số đối của −1/2 là 1/2. Trên hình, điểm C nằm ở vị trí đối xứng với vạch −1/2 qua O.','apply',rationalLine),
+    mc('Cho a, b, c là các số hữu tỉ. Nếu a < b và b < c, quan hệ nào xác định thứ tự của a và c và loại trừ trường hợp bằng nhau?',[
+      'a < c','a = c','a > c','a ≤ c'
+    ],'Tính chất bắc cầu cho a < c. Dấu ≤ vẫn bao gồm trường hợp bằng nhau nên không diễn đạt chính xác bằng dấu <.','recognize'),
+    mc('Trên trục số nằm ngang có chiều dương từ trái sang phải, nếu a < b thì điều gì luôn đúng?',[
+      'Điểm biểu diễn a nằm bên trái điểm biểu diễn b','Hai điểm biểu diễn a và b trùng nhau',
+      'Điểm biểu diễn a nằm bên phải điểm biểu diễn b','Cả hai điểm đều nằm bên phải O'
+    ],'Điểm biểu diễn số nhỏ hơn nằm bên trái điểm biểu diễn số lớn hơn.','recognize'),
+    mc('Hai số hữu tỉ a và b được biểu diễn như hình. Khẳng định nào đúng?',['b < 0 < a','b > 0 > a','b > a','b < a < 0'],
+      'Điểm b nằm bên trái O nên b < 0. Điểm a nằm bên phải O nên a > 0.','apply',comparisonLine),
+    mc('Dãy các số hữu tỉ nào được sắp xếp theo thứ tự tăng dần?',[
+      '−5/27; −1/9; 8/125; 7/25','−1/9; −5/27; 7/25; 8/125',
+      '7/25; 8/125; −1/9; −5/27','8/125; 7/25; −1/9; −5/27'
+    ],'Ta có −1/9 = −3/27 và 7/25 = 35/125. So sánh hai cặp cùng mẫu rồi đặt các số âm trước các số dương.'),
+    tf('Cho các số hữu tỉ −13/12; −4/5; −17/15; 1/5; 0; 9/4. Xét các phát biểu sau.',[
+      ['Các số hữu tỉ âm là −13/12; −4/5; −17/15.',true,'Ba phân số này đều có tử âm, mẫu dương.'],
+      ['Có ba số hữu tỉ dương.',false,'Chỉ 1/5 và 9/4 là số dương. Số 0 không dương.'],
+      ['Số hữu tỉ lớn nhất là 9/4.',true,'9/4 > 1, còn 1/5 < 1 và các số còn lại không dương.'],
+      ['Thứ tự tăng dần là −17/15; −13/12; −4/5; 0; 1/5; 9/4.',true,'Quy đồng ba số âm về mẫu 60, được −68/60 < −65/60 < −48/60.']
+    ]),
+    sa('Trong các phân số −12/15; −15/20; 24/(−32); −20/28; −27/36, có bao nhiêu phân số biểu diễn số hữu tỉ 3/(−4)?',
+      3,'Rút gọn được −15/20 = 24/(−32) = −27/36 = −3/4. Hai phân số còn lại bằng −4/5 và −5/7.'),
+    sa('Có bao nhiêu số nguyên x thỏa mãn −8/15 < x/15 < −1/3?',
+      2,'Nhân cả ba vế với 15 được −8 < x < −5. Hai giá trị nguyên là −7 và −6.'),
+    sa('Trong các phân số −10/15; 14/(−21); −8/16; −18/27; 22/(−33); −16/20, có bao nhiêu phân số biểu diễn số hữu tỉ 2/(−3)?',
+      4,'Các phân số −10/15, 14/(−21), −18/27 và 22/(−33) đều rút gọn thành −2/3.'),
+    sa('Có bao nhiêu số nguyên x thỏa mãn −3/4 < x/12 < −1/6?',
+      6,'Nhân cả ba vế với 12 được −9 < x < −2. Có sáu số nguyên từ −8 đến −3.'),
+    sa('Tuổi thọ trung bình dự kiến của người sinh năm 2023 ở 5 quốc gia được cho dưới đây (đơn vị: năm).\n'+
+      '1. Australia: 82\n2. Pháp: 81,5\n3. Tây Ban Nha: 82 1/5\n4. Anh: 80 2/5\n5. Mỹ: 77 1/2\n'+
+      'Sắp xếp các quốc gia theo tuổi thọ dự kiến từ nhỏ đến lớn. Nhập 5 chữ số tương ứng theo thứ tự, viết liền.',
+      54213,'Ta có 77,5 < 80,4 < 81,5 < 82 < 82,2. Thứ tự là Mỹ, Anh, Pháp, Australia, Tây Ban Nha.'),
+    sa('So sánh x = −7/5 và y = −11/9. '+comparisonAnswer,
+      -1,'Quy đồng về mẫu 45: x = −63/45, y = −55/45. Vậy x < y.'),
+    sa('So sánh x = 4/7 và y = 13/17. '+comparisonAnswer,
+      -1,'Quy đồng về mẫu 119: x = 68/119, y = 91/119. Vậy x < y.'),
+    sa('So sánh x = −7/3 và y = 13/(−6). '+comparisonAnswer,
+      -1,'Quy đồng về mẫu 6: x = −14/6, y = −13/6. Vậy x < y.'),
+    sa('So sánh x = −0,75 và y = 3/(−4). '+comparisonAnswer,
+      0,'Đổi −0,75 = −75/100 = −3/4 = 3/(−4). Vậy x = y.'));
+  a('g7-c1','g7-b2',
+    tf('Cho x ∈ ℚ và A = (3 − x)/(x + 1). Xét các phát biểu sau.',[
+      ['Có 3 giá trị nguyên dương của x để A là số hữu tỉ dương.',false,'Với x nguyên dương, mẫu dương. Tử dương khi x < 3, nên chỉ có x = 1 và x = 2.'],
+      ['Với mọi giá trị x < 0, A luôn là số hữu tỉ âm.',false,'Chẳng hạn x = −1/2 thì tử và mẫu đều dương. Tại x = −1, A không xác định.'],
+      ['Điều kiện để A là số hữu tỉ là x ≠ 0.',false,'Điều kiện là x ≠ −1 để mẫu khác 0. Với x = 0, A vẫn bằng 3.'],
+      ['Khi x = 2 thì A < 1/2.',true,'Thay x = 2, được A = 1/3 < 1/2.']
+    ],'trap'),
+    sa('Cho số hữu tỉ x = (a − 3)/a, với a là số nguyên khác 0. Có bao nhiêu giá trị của a để x là số nguyên?',
+      4,'Viết x = 1 − 3/a. Để x nguyên thì a là ước nguyên của 3, tức a ∈ {−3; −1; 1; 3}.','trap'));
   a('g7-c2','g7-b5',
     mc('Trong 2,1(36), chu kì lặp là gì?',['36','136','1','63'],'Sau chữ số 1, nhóm 36 lặp lại mãi.','recognize'),
     mc('Số 0,(45) bằng phân số nào?',['5/11','9/20','45/100','4/9'],'Gọi số là x. Khi đó 100x − x = 45, nên x = 45/99 = 5/11.'),

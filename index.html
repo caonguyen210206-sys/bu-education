@@ -1215,7 +1215,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <script src="data/buBookPDFs.js?v=1"></script>
 <script src="data/lesson-source-pages.js?v=1"></script>
 <script src="data/reviewed-lessons.js?v=2"></script>
-<script src="data/extra-practice.js?v=1"></script>
+<script src="data/extra-practice.js?v=2"></script>
 <script src="data/reference-papers.js?v=2"></script>
 <script src="learning.js?v=6"></script>
 <script src="workbook.js?v=4"></script>
@@ -1913,6 +1913,7 @@ function reasoningFigureHTML(figure) {
   const tint = '#f4f8f5';
   let content;
   let height = 216;
+  let description = 'Hình minh họa bài toán';
   const point = (x,y,name) =>
     '<text x="'+x+'" y="'+y+'" text-anchor="middle" class="diagram-label">'+esc(name)+'</text>';
   const path = (d,stroke=outline,fill='none',dashed=false) =>
@@ -1925,6 +1926,19 @@ function reasoningFigureHTML(figure) {
   const right = (x,y) => path('M'+x+' '+(y-10)+'h10v10',accent);
 
   switch (figure.type) {
+    case 'numberLine': {
+      height = 84;
+      description = figure.description || 'Trục số';
+      const x = index => 33 + 292 * index / (figure.ticks - 1);
+      const labeled = [...figure.above,...figure.below];
+      const ticks = figure.showAllTicks ? Array.from({length:figure.ticks},(_,index)=>index)
+        : labeled.map(([index])=>index);
+      content = path('M17 40H345m-8 -4l8 4l-8 4')+
+        ticks.map(index=>line(x(index),35,x(index),45)).join('')+
+        figure.above.map(([index,name])=>point(x(index),28,name)).join('')+
+        figure.below.map(([index,name])=>point(x(index),65,name)).join('');
+      break;
+    }
     case 'joinedSquares':
       content = path('M80 56H280V156H80Z',outline,tint)+
         line(180,56,180,156,accent,true);
@@ -2043,7 +2057,7 @@ function reasoningFigureHTML(figure) {
   }
 
   return '<div class="figure reasoning-diagram"><svg viewBox="0 0 360 '+height+
-    '" role="img" aria-label="Hình minh họa bài toán">'+content+'</svg></div>';
+    '" role="img" aria-label="'+esc(description)+'">'+content+'</svg></div>';
 }
 
 function solidFigureHTML(figure) {
