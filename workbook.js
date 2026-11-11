@@ -91,20 +91,24 @@ function noteAsExample(note) {
   return outlineExample([title,prompt,solution,answer,trap],true);
 }
 function bookMethod(method,topic,index,chapter,figures,scope) {
-  const {title,lead='',steps=[],example,worked=[],tip,diagram,practice}=method;
+  const {title,lead='',steps=[],example,worked=[],tip,diagram}=method;
+  const key=scope+'-method-'+index;
+  const practice=bookMethodPractice(chapter.id,key,method);
+  const examples=practice.useWorked?worked.slice(0,-1):worked;
   const matched=(topic.notes||[]).find(([,name])=>name===title||name&&title.includes(name));
   const related=method.formula||matched?.[3]||topic.formula||topic.formulas||'';
   const figure=diagram?studyFigure(diagram):(topic.diagrams?.length===1?studyFigure(topic.diagrams[0]):
     topic.visuals?.length===1?figures[topic.visuals[0]]||'':'');
   const extra=bookNoteMethods[chapter.id]===title?noteAsExample(buBookNotes[chapter.id]):'';
-  return '<details class="workbook-method" id="'+scope+'-method-'+index+'"><summary><span>Dạng '+index+'</span><strong>'+theoryFormula(title)+'</strong></summary>'+
+  return '<details class="workbook-method" id="'+key+'"><summary><span>Dạng '+index+'</span><strong>'+theoryFormula(title)+'</strong></summary>'+
     '<div class="method-detail">'+paperBody(
       (lead?theoryParagraphs(lead):'')+
       (related?formulaGroupHTML('Công thức và điều kiện',outlineFormula(related,new Set())):'')+
       (steps.length?'<h5>Phương pháp giải</h5><ol class="paper-steps">'+steps.map(step=>'<li>'+theoryFormula(step)+'</li>').join('')+'</ol>':'')+
       (tip?'<div class="outline-caution"><strong>Lỗi dễ gặp</strong>'+theoryParagraphs(tip)+'</div>':'')+
       (example?'<div class="outline-example"><h5>Ví dụ</h5>'+theoryParagraphs(example)+'</div>':'')+
-      worked.map(item=>outlineExample(item,worked.length>1)).join('')+extra+(practice?practiceHTML(practice):''),figure)+
+      examples.map(item=>outlineExample(item,examples.length>1)).join('')+extra,figure)+
+    '<section class="method-practice" aria-label="Bài luyện của dạng"><h5>Bài luyện của dạng</h5><div data-workbook-method="'+key+'"></div></section>'+
     '</div></details>';
 }
 function lessonSectionHeading(letter,title,id) {
@@ -120,6 +124,11 @@ function getBookMethods(lesson) {
     else methods.push({topic:lesson.extra,method:supplemental});
   }
   return methods;
+}
+function bookMethodPractice(chapterId,scope,method) {
+  const [ids,original]=buBookPractice[chapterId]?.[scope]||[[],[]];
+  const useWorked=Boolean(!method.practice&&!ids.length&&!original.length&&method.worked?.length);
+  return {ids,original,useWorked};
 }
 function bookLessonMarkup(lesson,index,chapter,figures) {
   const key=bookLessonKey(lesson,index);
@@ -139,7 +148,7 @@ function bookLessonMarkup(lesson,index,chapter,figures) {
 function sourceFooter(chapter) {
   const grade=state.user.grade, index=group(grade).chapters.findIndex(c=>c.id===chapter.id);
   const pdf=buBookPDFs[grade]?.[index>=(bookVolumeBreak[grade]||Infinity)?1:0];
-  const references=chapterSources[chapter.id]||[];
+  const references=(chapterSources[chapter.id]||[]).filter(([,url])=>datedToanMathArticle(url));
   if(!pdf&&!references.length)return '';
   return '<details class="workbook-sources"><summary>Tài liệu tham khảo</summary><ul>'+
     (pdf?'<li><a href="'+esc(pdf[1])+'" target="_blank" rel="noopener noreferrer">'+esc(pdf[0])+' · PDF ↗</a></li>':'')+
@@ -197,7 +206,10 @@ function openBookChapter(id) {
   window.scrollTo(0,0);
 }
 function workbookQuestionControls(q) {
-  if(q.type==='short')return '<label class="book-short">Đáp án<input name="answer" maxlength="48" inputmode="decimal" required autocomplete="off"></label>';
+  if(q.type==='short')return '<label class="book-short">Đáp án<input name="answer" maxlength="48" placeholder="Số hoặc phân số" required autocomplete="off"></label>';
+  if(q.type==='order')return '<ol class="book-order">'+q.options.map(step=>'<li>'+theoryFormula(step)+'</li>').join('')+
+    '</ol><label class="book-short">Thứ tự các bước<input name="answer" placeholder="Ví dụ 2 1 3" maxlength="48" required autocomplete="off"></label>';
+  if(q.type==='written')return '<label class="book-written">Bài làm của em<textarea name="answer" rows="3" maxlength="1500" required></textarea></label>';
   if(q.type==='tf')return '<ol class="book-tf" type="a">'+q.statements.map((statement,i)=>
     '<li><fieldset><legend>'+quizMath(statement.text)+'</legend>'+figureHTML(statement.figure)+
     '<div class="book-tf-picks">'+['true','false'].map(value=>'<label><input type="radio" required name="part'+i+'" value="'+value+'"> '+
@@ -206,25 +218,32 @@ function workbookQuestionControls(q) {
     '" required><span><b>'+'ABCD'[i]+'.</b> '+quizMath(option)+'</span></label>').join('')+'</div>';
 }
 function workbookAnswer(q,mark) {
+  if(q.type==='written')return '<div class="book-feedback"><strong>Lời giải tham khảo</strong>'+theoryParagraphs(mark.explanation)+
+    (mark.answer?'<p><strong>Kết quả</strong> '+theoryFormula(mark.answer)+'</p>':'')+
+    '<details><summary>Bài làm của em</summary><p class="book-written-response">'+esc(mark.selected)+'</p></details></div>';
+  if(q.type==='order')return '<div class="book-feedback '+(mark.allCorrect?'right':'review')+'"><strong>'+
+    (mark.allCorrect?'Đúng rồi':'Chưa đúng thứ tự')+'</strong><p>Đáp án '+mark.answer.join(' → ')+'</p><ol class="paper-steps">'+
+    mark.answer.map(number=>'<li>'+theoryFormula(q.options[number-1])+'</li>').join('')+'</ol></div>';
   const selected=q.type==='mcq'?'ABCD'[mark.answer]:mark.answer;
   const heading=mark.allCorrect?'Đúng rồi':q.type==='tf'?mark.correct+'/'+mark.units+' ý đúng':'Chưa đúng';
   const explanation=q.type==='tf'?'<ol type="a">'+mark.parts.map(part=>'<li><strong>'+(part.answer?'Đúng':'Sai')+'</strong> · '+
     quizMath(part.explanation)+'</li>').join('')+'</ol>':'<p><strong>Đáp án</strong> '+quizMath(selected)+'</p>'+theoryParagraphs(mark.explanation);
   return '<div class="book-feedback '+(mark.allCorrect?'right':'review')+'"><strong>'+heading+'</strong>'+explanation+'</div>';
 }
-function mountBookQuestion(container,item,index,chapter,lessonId) {
+function mountBookQuestion(container,item,index,chapter,lessonId,scope='') {
   const q=item.question, mark=item.feedback;
-  container.innerHTML='<div class="exercise-line"><strong>Bài '+(index+1)+'</strong><span>'+esc(typeNames[q.type])+'</span></div>'+
+  const label={order:'Sắp xếp bước giải',written:'Trình bày lời giải'}[q.type]||typeNames[q.type];
+  container.innerHTML='<div class="exercise-line"><strong>Bài '+(index+1)+'</strong><span>'+esc(label)+'</span></div>'+
     '<div class="book-question-text">'+questionPrompt(q.prompt)+'</div>'+figureHTML(q.figure)+
     (mark?workbookAnswer(q,mark)+'<button class="btn secondary" type="button" data-book-retry>Làm lại</button>':
     '<form><fieldset class="book-fields" aria-label="Câu trả lời">'+workbookQuestionControls(q)+'</fieldset>'+
-    '<div class="book-exercise-actions"><button class="btn" type="submit">Kiểm tra</button>'+
+    '<div class="book-exercise-actions"><button class="btn" type="submit">'+(q.type==='written'?'Đối chiếu lời giải':'Kiểm tra')+'</button>'+
       (item.hint?'<details class="book-hint"><summary>Gợi ý</summary>'+theoryParagraphs(item.hint)+'</details>':'')+
     '</div><p class="book-error" role="alert"></p></form>');
   if(mark){
     container.querySelector('[data-book-retry]').onclick=()=>{
-      mountBookQuestion(container,{...item,feedback:null},index,chapter,lessonId);
-      container.querySelector('input')?.focus();
+      mountBookQuestion(container,{...item,feedback:null},index,chapter,lessonId,scope);
+      container.querySelector('input,textarea')?.focus();
     };
     return;
   }
@@ -237,9 +256,9 @@ function mountBookQuestion(container,item,index,chapter,lessonId) {
     const data=new FormData(form), response=q.type==='tf'?q.statements.map((_,i)=>data.get('part'+i)==='true'):
       q.type==='mcq'?Number(data.get('answer')):data.get('answer');
     try {
-      const feedback=await rpc('checkBookExercise',state.token,chapter,lessonId,q.id,response,!!form.querySelector('details')?.open);
+      const feedback=await rpc('checkBookExercise',state.token,chapter,lessonId,q.id,response,!!form.querySelector('details')?.open,scope);
       if(form.isConnected){
-        mountBookQuestion(container,{...item,feedback},index,chapter,lessonId);
+        mountBookQuestion(container,{...item,feedback},index,chapter,lessonId,scope);
         const notice=container.querySelector('.book-feedback');
         notice.tabIndex=-1;notice.focus({preventScroll:true});
       }
@@ -248,7 +267,7 @@ function mountBookQuestion(container,item,index,chapter,lessonId) {
   };
 }
 async function mountBookWorksheets(chapter) {
-  const panels=$$('[data-workbook-scope]'), models=$$('[data-workbook-model]');
+  const panels=$$('[data-workbook-scope],[data-workbook-method]'), models=$$('[data-workbook-model]');
   panels.forEach(panel=>{panel.textContent='Đang mở bài tập…';});
   try {
     const items=await rpc('bookWorksheet',state.token,chapter);
@@ -264,13 +283,15 @@ async function mountBookWorksheets(chapter) {
     }
     for(const panel of panels) {
       if(!panel.isConnected)continue;
-      const id=panel.dataset.workbookScope;
-      const set=id?items.lessons[id]||[]:items.end;
+      const scope=panel.dataset.workbookMethod||'';
+      const method=items.methods[scope];
+      const id=method?.lessonId||panel.dataset.workbookScope||'';
+      const set=scope?method?.items||[]:id?items.lessons[id]||[]:items.end;
       if(!set.length){panel.textContent='Bài luyện của mục này nằm ở phần ôn tập cuối chương.';continue;}
       panel.replaceChildren(...set.map((item,i)=>{
         const container=document.createElement('div');
         container.className='workbook-exercise';
-        mountBookQuestion(container,item,i,chapter,id);
+        mountBookQuestion(container,item,i,chapter,id,scope);
         return container;
       }));
     }

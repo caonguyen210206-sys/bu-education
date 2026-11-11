@@ -178,3 +178,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .workbook-model { margin:9px 0;padding:8px 10px;border:1px solid #dce8df;border-radius:8px;background:#f7faf7; }
 .workbook-model summary { cursor:pointer;color:#275a3f;font-weight:700; }
 .workbook-model>div { margin-top:6px; }
+.method-practice { margin-top:16px;padding:12px 14px;background:#f3f8f3;border:1px solid #d8e7d9;border-radius:10px; }
+.method-practice>h5 { margin:0 0 9px;color:#1c533c;font-size:17px; }
+.method-practice .workbook-exercise:last-child { margin-bottom:0; }
+.book-order { padding-left:24px; }
+.book-order li+li { margin-top:5px; }
+.book-written { display:grid;gap:5px; }
+.book-written textarea { width:100%;padding:8px;border:1px solid #a8c6b1;border-radius:6px;resize:vertical;font:inherit; }
+.book-written-response { white-space:pre-wrap;overflow-wrap:anywhere; }

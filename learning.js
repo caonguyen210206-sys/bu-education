@@ -1,7 +1,9 @@
 'use strict';
 
 const examKinds = {mid1:'Giữa kỳ I', end1:'Cuối kỳ I', mid2:'Giữa kỳ II', end2:'Cuối kỳ II'};
+const libraryKinds = {...examKinds,entrance:'Tuyển sinh lớp 10',graduation:'Tốt nghiệp THPT'};
 const learningOptions = {chapter:'', lesson:'', period:'mid1', mode:'custom', selected:null};
+const libraryFilters = {kind:'',period:'',year:'',query:''};
 function gradeField(grade, id) {
   return '<label class="learn-field">Khối lớp<select id="'+id+'">'+gradeOptions(grade)+'</select></label>';
 }
@@ -17,6 +19,7 @@ async function changeLearningGrade(grade, page) {
     state.chapter=state.lesson='';
     learningOptions.chapter=learningOptions.lesson='';
     learningOptions.selected=null;
+    libraryFilters.period='';
     enter(current,page);
   } catch (error) { fail(error); }
 }
@@ -37,11 +40,52 @@ function renderPortalHome() {
       '</section><a href="admin.html" class="hub-host">Cổng Host ↗</a></div>';
   $$('[data-hub]').forEach(card=>card.onclick=()=>navigate(card.dataset.hub));
 }
-function examSources(grade,period) {
-  return (buExamSources[grade]?.[period]||[]).map(([title,url,year])=>
-    '<article class="exam-source"><div><strong>'+esc(title)+'</strong><small>'+esc(year)+' · TOANMATH</small></div>'+
-    '<a class="btn secondary" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+
-    (url.endsWith('.html')?'Mở đề gốc':'Xem kho đề')+' ↗</a></article>').join('');
+function datedToanMathArticle(url) {
+  return /^https:\/\/(?:thcs\.)?toanmath\.com\/(?:202[4-9]|20[3-9]\d)\/\d{2}\/[\w-]+\.html$/u.test(url);
+}
+function sourceCard([title,url,date],kind,period='') {
+  const metadata=[libraryKinds[period],date.split('-').reverse().join('/'),'TOANMATH'].filter(Boolean).join(' · ');
+  return '<article class="exam-source"><div><strong>'+esc(title)+'</strong><small>'+esc(metadata)+'</small></div>'+
+    '<a class="btn secondary" aria-label="'+esc('Mở trên TOANMATH · '+title)+'" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+
+    (kind==='exam'?'Mở đề gốc':'Mở tài liệu')+' ↗</a></article>';
+}
+function renderExamLibrary(grade) {
+  const exams=buExamSources[grade]||{};
+  const sources=Object.entries(exams).flatMap(([period,items])=>items.map(item=>({item,period,kind:'exam'})))
+    .concat((buReviewSources[grade]||[]).map(item=>({item,period:'',kind:'material'})))
+    .sort((a,b)=>b.item[2].localeCompare(a.item[2]));
+  if(!sources.length){
+    $('#examContent').innerHTML='<section class="exam-original"><h2>Kho đề và tài liệu</h2><p>Kho TOANMATH hiện có cho lớp 6–12. Chọn khối lớp ở trên để xem.</p></section>';
+    return;
+  }
+  const years=[...new Set(Object.values(buExamSources).flatMap(g=>Object.values(g).flat().map(item=>item[2].slice(0,4)))
+    .concat(Object.values(buReviewSources).flat().map(item=>item[2].slice(0,4))))].sort().reverse();
+  const options=(items,selected)=>items.map(([value,label])=>'<option value="'+esc(value)+'" '+
+    (value===selected?'selected':'')+'>'+esc(label)+'</option>').join('');
+  const periods=Object.keys(exams).map(key=>[key,libraryKinds[key]]);
+  $('#examContent').innerHTML='<section class="exam-original exam-library" aria-labelledby="libraryTitle"><h2 id="libraryTitle">Kho Toán '+grade+'</h2>'+
+    '<div class="library-filters"><label class="learn-field">Tìm kiếm<input type="search" id="librarySearch" placeholder="Tên trường, chuyên đề…" value="'+esc(libraryFilters.query)+'"></label>'+
+    '<label class="learn-field">Loại<select id="libraryKind">'+options([['','Tất cả'],['exam','Đề thi'],['material','Tài liệu ôn tập']],libraryFilters.kind)+'</select></label>'+
+    '<label class="learn-field">Kỳ thi<select id="libraryPeriod">'+options([['','Tất cả kỳ thi'],...periods],libraryFilters.period)+'</select></label>'+
+    '<label class="learn-field">Năm đăng<select id="libraryYear">'+options([['','Từ 2024'],...years.map(y=>[y,y])],libraryFilters.year)+'</select></label></div>'+
+    '<p class="sub library-count" id="libraryCount" role="status"></p><div id="libraryResults"></div></section>';
+  const search=$('#librarySearch'), kind=$('#libraryKind'), period=$('#libraryPeriod'), year=$('#libraryYear');
+  function update() {
+    Object.assign(libraryFilters,{kind:kind.value,period:period.value,year:year.value,query:search.value});
+    period.disabled=libraryFilters.kind==='material';
+    const words=normalize(libraryFilters.query.trim()).split(/\s+/u).filter(Boolean);
+    const visible=sources.filter(row=>{
+      const [title,,date]=row.item;
+      const haystack=normalize(title+' '+(libraryKinds[row.period]||''));
+      return (!kind.value||kind.value===row.kind)&&
+        (period.disabled||!period.value||period.value===row.period)&&date.startsWith(year.value)&&words.every(word=>haystack.includes(word));
+    });
+    $('#libraryCount').textContent=visible.length+' kết quả';
+    $('#libraryResults').innerHTML=visible.map(row=>sourceCard(row.item,row.kind,row.period)).join('')||
+      '<p>Không tìm thấy đề hoặc tài liệu phù hợp.</p>';
+  }
+  search.oninput=kind.onchange=period.onchange=year.onchange=update;
+  update();
 }
 function renderExam() {
   state.page='exam';
@@ -53,7 +97,8 @@ function renderExam() {
   $('#main').innerHTML='<div class="learn-cover exam-cover"><div><h1>Luyện thi Toán '+grade+'</h1>'+
     '<p>Tạo bài theo chương, bài học hoặc chọn kỳ kiểm tra.</p></div>'+gradeField(grade,'examGrade')+'</div>'+
     '<div class="exam-tools"><div class="exam-switch" role="group" aria-label="Chế độ luyện thi">'+
-    '<button type="button" data-mode="custom">Theo chương và bài</button><button type="button" data-mode="semester">Giữa kỳ và cuối kỳ</button></div>'+
+    '<button type="button" data-mode="custom">Theo chương và bài</button><button type="button" data-mode="semester">Giữa kỳ và cuối kỳ</button>'+
+    '<button type="button" data-mode="library">Kho đề và tài liệu</button></div>'+
     '<div class="exam-links"><button type="button" id="examMistakes">Sổ lỗi</button><button type="button" id="examHistory">Kết quả</button></div></div>'+
     (active.length?'<details class="exam-saved"><summary>Bài đang làm ('+active.length+')</summary>'+
       active.map(run=>'<button type="button" data-exam-resume="'+esc(run.id)+'">'+esc(run.title)+' · '+run.count+' câu '+icon('arrow')+'</button>').join('')+'</details>':'')+
@@ -68,12 +113,13 @@ function renderExam() {
 function renderExamOptions(chapters) {
   const semester=learningOptions.mode==='semester';
   $$('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===learningOptions.mode)));
+  if(learningOptions.mode==='library'){renderExamLibrary(state.user.grade);return;}
   const chapter=chapters.find(c=>c.id===learningOptions.chapter);
   const lessons=lessonCatalog[chapter.id];
   const lesson=lessons.find(item=>item.id===learningOptions.lesson);
   const levels=Object.entries(practiceLevels).map(([key,name])=>
     '<label><input type="checkbox" name="level" value="'+key+'" '+(state.levels.includes(key)?'checked':'')+'>'+name+'</label>').join('');
-  const source=examSources(state.user.grade,learningOptions.period);
+  const source=(buExamSources[state.user.grade]?.[learningOptions.period]||[]).slice(0,4).map(item=>sourceCard(item,'exam')).join('');
   $('#examContent').innerHTML='<div class="exam-columns"><form class="exam-form" id="examForm"><h2>'+
     (semester?'Đề mô phỏng':'Tạo bài luyện')+'</h2>'+
     (semester?'<label class="learn-field">Kỳ kiểm tra<select id="examPeriod">'+Object.entries(examKinds).map(([key,name])=>
@@ -90,7 +136,12 @@ function renderExamOptions(chapters) {
     (semester?'<label class="learn-field">Thời gian<select id="examTime"><option value="30">30 phút</option><option value="45" selected>45 phút</option><option value="60">60 phút</option><option value="90">90 phút</option></select></label>':'')+
     '</div><p id="examAvailable" class="sub" role="status"></p><button class="btn" id="examStart" type="submit">Bắt đầu làm bài '+icon('arrow')+'</button></form>'+
     (semester?'<section class="exam-original"><h2>Đề gốc · '+esc(examKinds[learningOptions.period])+'</h2>'+
-      (source||'<p>Kho đề gốc hiện có cho các lớp 6–12.</p>')+'</section>':'')+'</div>';
+      (source?source+'<button class="btn secondary" type="button" id="examAllSources">Xem tất cả đề kỳ này '+icon('arrow')+'</button>':
+        '<p>Kho đề gốc hiện có cho các lớp 6–12.</p>')+'</section>':'')+'</div>';
+  if($('#examAllSources'))$('#examAllSources').onclick=()=>{
+    Object.assign(libraryFilters,{kind:'exam',period:learningOptions.period,year:'',query:''});
+    learningOptions.mode='library';renderExamOptions(chapters);
+  };
   const form=$('#examForm');
   function selectedChapters() {
     return semester?[...form.querySelectorAll('[name=chapter]:checked')].map(el=>el.value):[chapter.id];

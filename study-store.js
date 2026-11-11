@@ -56,7 +56,18 @@ const buStudy = (() => {
   }
   function grade(q,selected,hinted,partial=false) {
     let complete, correct, units, parts=null;
-    if (q.type==='tf') {
+    if (q.type==='written') {
+      selected=String(selected??'').trim();
+      complete=selected.length>0&&selected.length<=1500;
+      units=correct=0;
+    } else if (q.type==='order') {
+      selected=String(selected??'').trim().split(/[\s,]+/u).map(Number);
+      units=1;
+      complete=selected.length===q.options.length&&new Set(selected).size===selected.length&&
+        selected.every(n=>Number.isInteger(n)&&n>=1&&n<=q.options.length);
+      correct=complete&&selected.every((n,i)=>n===q.answer[i])?1:0;
+      selected=selected.join(' ');
+    } else if (q.type==='tf') {
       units=4;
       selected=Array.from({length:4},(_,i)=>typeof selected?.[i]==='boolean'?selected[i]:null);
       complete=selected.every(x=>x!==null);
@@ -75,10 +86,41 @@ const buStudy = (() => {
       selected=complete?String(selected).trim():null;
       correct=complete&&Math.abs(number-Number(q.answer))<=(q.tolerance||1e-6)?1:0;
     }
-    if(!complete&&!partial) throw Error(q.type==='short'?'Nhập một số hoặc phân số hợp lệ.':'Chọn đủ đáp án để kiểm tra.');
-    return {id:q.id,question:publicQuestion(q),selected,answer:q.answer,parts,correct,units,
-      allCorrect:correct===units,complete,explanation:q.explanation,rule:q.rule,trap:q.trap,
+    const invalid={short:'Nhập một số hoặc phân số hợp lệ.',order:'Nhập mỗi số một lần, cách nhau bằng dấu cách.',written:'Nhập bài làm từ 1 đến 1500 ký tự.'};
+    if(!complete&&!partial) throw Error(invalid[q.type]||'Chọn đủ đáp án để kiểm tra.');
+    return {id:q.id,question:publicQuestion(q),selected,answer:q.answerText??q.answer,parts,correct,units,
+      allCorrect:units>0&&correct===units,complete,explanation:q.explanation,rule:q.rule,trap:q.trap,
       hinted,at:new Date().toISOString()};
+  }
+  function worksheetItem(current,q) {
+    const previous=current.bookResponses?.[q.id];
+    return {question:publicQuestion(q),hint:q.hint||q.rule||'',feedback:previous?
+      grade(q,previous.response,previous.hinted,true):null};
+  }
+  function methodQuestions(chapter,data) {
+    const entries=workbookLessons(chapter).flatMap((lesson,li)=>getBookMethods(lesson).map(({method},mi)=>{
+      const scope=bookLessonKey(lesson,li)+'-method-'+(mi+1);
+      const id=chapter.id+'-'+scope;
+      const {ids,original,useWorked}=bookMethodPractice(chapter.id,scope,method);
+      const allowed=lesson.id?data.byLesson[lesson.id]:data.chapterIds;
+      const questions=ids.filter(qid=>allowed?.includes(qid)).map(qid=>data.questions[qid]);
+      original.forEach((q,i)=>questions.push({...q,id:id+'-short-'+(i+1),type:'short'}));
+      const example=useWorked?method.worked.at(-1):null;
+      if(method.practice||example){
+        const [prompt,hint,answer]=method.practice||[example[1],'',example[3]];
+        const explanation=example?.[2].join('\n')||'';
+        questions.push({id:id+'-written',type:'written',prompt,hint,answer,explanation});
+      }
+      const steps=[...new Set(method.steps||[])];
+      if(steps.length>=2){
+        const offset=1+(li+mi)%(steps.length-1);
+        const options=[...steps.slice(offset),...steps.slice(0,offset)];
+        questions.push({id:id+'-order',type:'order',prompt:'Sắp xếp các bước theo trình tự của phương pháp vừa học.',
+          options,answer:steps.map(step=>options.indexOf(step)+1)});
+      }
+      return [scope,{lessonId:lesson.id,questions}];
+    }));
+    return Object.fromEntries(entries);
   }
   function storedProgress(current,chapter,lesson='') {
     return Object.values(current.marks[chapter.id]||{}).filter(p=>lesson?p.lessonId===lesson:p.whole);
@@ -220,7 +262,8 @@ const buStudy = (() => {
       const chapter=chapters.get(chapterId);
       if(chapter?.grade!==profile(id).user.grade)throw Error('Chương không thuộc lớp đã chọn.');
       const data=await bank(chapterId), current=profile(id);
-      const used=new Set();
+      const methods=methodQuestions(chapter,data);
+      const used=new Set(Object.values(methods).flatMap(method=>method.questions.map(q=>q.id)));
       const scoped=(ids,perType)=>{
         const picked=[];
         for(const type of ['mcq','tf','short']) {
@@ -231,11 +274,7 @@ const buStudy = (() => {
             if(next){picked.push(next);used.add(next.id);}
           }
         }
-        return picked.map(q=>{
-          const previous=current.bookResponses?.[q.id];
-          return {question:publicQuestion(q),hint:q.hint||q.rule||'',feedback:previous?
-            grade(q,previous.response,previous.hinted,true):null};
-        });
+        return picked.map(q=>worksheetItem(current,q));
       };
       const end=scoped(data.chapterIds,3);
       const lessons=Object.fromEntries(Object.entries(data.byLesson).map(([lesson,ids])=>[lesson,scoped(ids,1)]));
@@ -248,18 +287,22 @@ const buStudy = (() => {
           examples[lesson]={question:publicQuestion(example),answer:example.answer,explanation:example.explanation};
         }
       }
-      return {end,lessons,examples};
+      return {end,lessons,examples,methods:Object.fromEntries(Object.entries(methods).map(([scope,{lessonId,questions}])=>
+        [scope,{lessonId,items:questions.map(q=>worksheetItem(current,q))}]))};
     },
-    async checkBookExercise(id,chapterId,lessonId,qid,response,hinted) {
+    async checkBookExercise(id,chapterId,lessonId,qid,response,hinted,scope='') {
       const chapter=chapters.get(chapterId);
       if(chapter?.grade!==profile(id).user.grade)throw Error('Chương không thuộc lớp đã chọn.');
       const data=await bank(chapterId), current=profile(id);
       const ids=lessonId?data.byLesson[lessonId]:data.chapterIds;
-      if(!ids?.includes(qid))throw Error('Bài tập không thuộc phạm vi này.');
-      const question=data.questions[qid], mark=grade(question,response,Boolean(hinted));
+      const method=scope?methodQuestions(chapter,data)[scope]:null;
+      const question=scope?(method?.lessonId===lessonId?method.questions.find(q=>q.id===qid):null):
+        (ids?.includes(qid)?data.questions[qid]:null);
+      if(!question)throw Error('Bài tập không thuộc phạm vi này.');
+      const mark=grade(question,response,Boolean(hinted));
       const responses=current.bookResponses||={};
       responses[qid]={response:mark.selected,hinted:mark.hinted};
-      record(current,{chapterId,lessonId},question,mark,data.chapterIds.includes(qid));
+      if(data.questions[qid])record(current,{chapterId,lessonId},question,mark,data.chapterIds.includes(qid));
       save(current);
       return mark;
     },
