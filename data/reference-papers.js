@@ -4,10 +4,172 @@ const buExamPapers = (() => {
   const mc=(prompt,options,answer,explanation)=>({type:'mcq',prompt,options,answer,explanation});
   const sa=(prompt,answer,explanation,answerText)=>({type:'short',prompt,answer,answerText,explanation});
   const ds=(prompt,rows)=>({type:'tf',prompt,statements:rows.map(([text,answer,explanation])=>({text,answer,explanation}))});
-  const paper=(grade,school,source,scope,minutes,questions)=>({
-    id:'mid1-school-g'+grade,grade,title:'Giữa kỳ I · Theo đề '+school,source,scope,minutes,period:'mid1',chapterId:'g'+grade+'-c1',
-    questions:questions.map((q,i)=>({...q,id:'paper-g'+grade+'-mid1-'+(i+1),tags:['apply']}))
-  });
+  const additions={
+    6:[
+      mc('Đẳng thức nào đúng?',['2³ + 2² = 2⁵','2³ × 2² = 2⁶','2⁵ : 2² = 2³','(2²)³ = 2⁵'],2,'Khi chia hai lũy thừa cùng cơ số khác 0, lấy số mũ của số bị chia trừ số mũ của số chia.'),
+      mc('Cần thêm ít nhất bao nhiêu vào 47 để được một số chia hết cho 6?',['1','2','5','6'],0,'Bội của 6 nhỏ nhất và lớn hơn 47 là 48.'),
+      mc('Nếu hình vuông có cạnh gấp đôi thì diện tích thay đổi thế nào?',['Tăng gấp đôi','Tăng gấp ba','Tăng gấp bốn','Không đổi'],2,'Cả chiều dài và chiều rộng đều tăng gấp đôi. Diện tích tăng 2 × 2 = 4 lần.'),
+      mc('Hai số tự nhiên nào nguyên tố cùng nhau?',['9 và 21','12 và 18','15 và 28','16 và 24'],2,'Các thừa số nguyên tố của 15 là 3, 5. Của 28 là 2, 7. Vì vậy ƯCLN bằng 1.'),
+      ds('Một lớp có 24 học sinh nữ và 18 học sinh nam. Cô chia tất cả thành các nhóm có số nữ bằng nhau và số nam bằng nhau.',[
+        ['Có thể chia thành 3 nhóm.',true,'Cả 24 và 18 đều chia hết cho 3.'],
+        ['Phương án chia lớp thành 4 nhóm thỏa yêu cầu.',false,'18 học sinh nam không chia đều được vào 4 nhóm.'],
+        ['Số nhóm nhiều nhất là 6.',true,'ƯCLN(24, 18) = 6.'],
+        ['Khi chia thành nhiều nhóm nhất, mỗi nhóm có 6 học sinh.',false,'Mỗi nhóm có 24 : 6 + 18 : 6 = 7 học sinh.']
+      ]),
+      ds('Xét số tự nhiên N có ba chữ số 4, x, 5 theo thứ tự từ trái sang phải, với x là một chữ số.',[
+        ['N luôn chia hết cho 5.',true,'Chữ số hàng đơn vị là 5.'],
+        ['Không có cách chọn x để N chia hết cho 9.',false,'Tổng chữ số là 9 + x nên x = 0 hoặc x = 9 đều được.'],
+        ['Có 4 cách chọn x để N chia hết cho 3.',true,'Có thể chọn x trong tập {0; 3; 6; 9}.'],
+        ['Có cách chọn x để N chia hết cho 2.',false,'Chữ số hàng đơn vị luôn là số lẻ.']
+      ]),
+      ds('Một hình vuông và một hình chữ nhật có cùng chu vi 32 cm. Hình chữ nhật dài 10 cm.',[
+        ['Cạnh hình vuông dài 8 cm.',true,'32 : 4 = 8 cm.'],
+        ['Chiều rộng hình chữ nhật dài 12 cm.',false,'Nửa chu vi là 16 cm nên chiều rộng là 6 cm.'],
+        ['Hình vuông có diện tích lớn hơn hình chữ nhật.',true,'Hai diện tích lần lượt là 64 cm² và 60 cm².'],
+        ['Có thể xếp kín hình chữ nhật bằng 15 hình vuông cạnh 2 cm.',true,'Xếp 10 : 2 = 5 hình theo chiều dài và 6 : 2 = 3 hình theo chiều rộng.']
+      ]),
+      sa('Tìm số tự nhiên có ba chữ số nhỏ nhất chia hết cho cả 18 và 24.',144,'BCNN(18, 24) = 72. Hai bội dương đầu tiên là 72 và 144, nên chọn 144.'),
+      sa('Một tấm bìa hình chữ nhật dài 30 cm, rộng 18 cm. Cắt kín tấm bìa thành các hình vuông bằng nhau có cạnh dài nhất có thể. Cắt được bao nhiêu hình?',15,'Cạnh mỗi hình vuông dài ƯCLN(30, 18) = 6 cm. Có 5 × 3 = 15 hình.'),
+      sa('Tính giá trị 5² − 2 × (12 − 3²).',19,'Tính lũy thừa trước. Trong ngoặc còn 12 − 9 = 3, nên kết quả là 25 − 6 = 19.')
+    ],
+    7:[
+      mc('Trong các số sau, số nào lớn nhất?',['−0,51','−1/2','−0,49','−3/5'],2,'Viết các số dưới dạng thập phân rồi so sánh. Số âm gần 0 nhất là −0,49.'),
+      mc('Tích của ba thừa số âm và hai thừa số dương có dấu gì?',['Dương','Âm','Bằng 0','Tùy độ lớn các thừa số'],1,'Có số lẻ thừa số âm nên tích âm.'),
+      mc('Mỗi góc do hai đường thẳng cắt nhau tạo thành đều bằng góc kề với nó. Số đo mỗi góc là bao nhiêu?',['45°','60°','90°','180°'],2,'Hai góc kề trong hình này bù nhau. Vì chúng bằng nhau nên mỗi góc bằng 90°.'),
+      mc('Đường thẳng c cắt hai đường thẳng a, b phân biệt. Điều kiện nào đủ để kết luận a ∥ b?',['Hai góc trong cùng phía bằng nhau','Một cặp góc đồng vị bù nhau','Một cặp góc so le trong bằng nhau','Hai góc đối đỉnh bằng nhau'],2,'Hai góc so le trong bằng nhau là dấu hiệu nhận biết hai đường thẳng song song.'),
+      ds('Một bể đang chứa 3/5 dung tích. Người ta lấy ra 1/4 lượng nước đang có. Xét bể có dung tích 80 lít.',[
+        ['Ban đầu trong bể có 48 lít nước.',true,'80 × 3/5 = 48.'],
+        ['Lượng nước lấy ra bằng 1/4 dung tích bể.',false,'Phân số 1/4 tính trên lượng nước đang có, chỉ bằng 3/20 dung tích bể.'],
+        ['Sau khi lấy ra, nước chiếm 9/20 dung tích bể.',true,'Phần còn lại bằng 3/4 của 3/5, tức 9/20.'],
+        ['Cần thêm 32 lít nữa để đầy bể.',false,'Còn 36 lít nước, nên cần thêm 44 lít.']
+      ]),
+      ds('Hai đường thẳng a và b cắt đường thẳng c. Một góc trong tại giao điểm với a bằng 65°, góc trong cùng phía với nó tại giao điểm với b bằng 115°.',[
+        ['a và b song song.',true,'Hai góc trong cùng phía có tổng 180°.'],
+        ['Góc đồng vị với góc 65° cũng có số đo 65°.',true,'Hai đường thẳng song song tạo các cặp góc đồng vị bằng nhau.'],
+        ['Góc đối đỉnh với góc 115° có số đo 65°.',false,'Góc đối đỉnh với góc 115° cũng bằng 115°.'],
+        ['c vuông góc với a.',false,'Góc đã cho tại giao điểm là 65°, khác 90°.']
+      ]),
+      ds('Vào buổi sáng nhiệt độ là −3,5 °C. Đến trưa nhiệt độ tăng thêm 6,25 °C. Từ trưa đến tối nhiệt độ giảm 4 °C.',[
+        ['Buổi sáng nhiệt độ dưới 0 °C.',true,'−3,5 là số âm.'],
+        ['Buổi trưa nhiệt độ là 2,75 °C.',true,'−3,5 + 6,25 = 2,75.'],
+        ['Buổi tối nhiệt độ là 1,25 °C.',false,'2,75 − 4 = −1,25.'],
+        ['Từ sáng đến tối nhiệt độ tăng 2,25 °C.',true,'Độ thay đổi là 6,25 − 4 = 2,25 °C.']
+      ]),
+      sa('Một món hàng giá 250 nghìn đồng. Tăng giá 20%, rồi giảm 20% trên giá mới. Giá cuối cùng là bao nhiêu nghìn đồng?',240,'Giá cuối bằng 250 × 1,2 × 0,8 = 240 nghìn đồng.'),
+      sa('Hai góc kề bù. Góc thứ nhất bằng 2/3 góc thứ hai. Tính số đo góc thứ nhất theo độ.',72,'Tổng 180° gồm 2 + 3 = 5 phần. Góc thứ nhất có 2 phần, bằng 72°.'),
+      sa('Tính (−2/3)³ : (−4/9).',2/3,'Lũy thừa bằng −8/27. Nhân với nghịch đảo −9/4 được 2/3.','2/3')
+    ],
+    8:[
+      mc('Hạng tử nào đồng dạng với −3x²y?',['3xy²','−3x²','5x²y','x²y²'],2,'Phần biến phải giống nhau cả về biến và số mũ.'),
+      mc('Tích (x − 1)(x² + x + 1) bằng biểu thức nào?',['x³ + 1','x³ − 1','x³ − x² + 1','x³ − x'],1,'Dùng hằng đẳng thức hiệu hai lập phương.'),
+      mc('Một hình bình hành có hai đường chéo vuông góc. Kết luận nào luôn đúng?',['Đó là hình thoi','Đó là hình chữ nhật','Đó là hình vuông','Hai đường chéo bằng nhau'],0,'Hình bình hành có hai đường chéo vuông góc là hình thoi.'),
+      mc('Tính nhanh 103 × 97.',['9 009','9 909','9 991','10 009'],2,'Hai thừa số là 100 + 3 và 100 − 3, tích bằng 100² − 3² = 9 991.'),
+      ds('Cho P = (x + 3)² − (x − 3)².',[
+        ['Hai hạng tử chứa x² triệt tiêu khi khai triển.',true,'Cả hai bình phương đều có hệ số của x² bằng 1.'],
+        ['P = 6x.',false,'Hiệu hai bình phương bằng 6 × 2x = 12x.'],
+        ['P đổi dấu khi thay x bằng −x.',true,'P(−x) = −12x = −P(x).'],
+        ['Với x = 1, giá trị P là 16.',false,'P(1) = 12.']
+      ]),
+      ds('Cho hình thoi ABCD có hai đường chéo AC = 16 cm, BD = 12 cm cắt nhau tại O.',[
+        ['O là trung điểm của AC và BD.',true,'Hình thoi là hình bình hành.'],
+        ['Tam giác AOB vuông tại O.',true,'Hai đường chéo của hình thoi vuông góc.'],
+        ['Cạnh AB dài 14 cm.',false,'Pythagore cho AB = √(8² + 6²) = 10 cm.'],
+        ['Diện tích hình thoi bằng 96 cm².',true,'Diện tích bằng 16 × 12 : 2 = 96 cm².']
+      ]),
+      ds('Hai hình vuông có độ dài cạnh a và b với a > b > 0. Biết a + b = 14 cm và a − b = 4 cm.',[
+        ['Hình vuông lớn có cạnh 9 cm.',true,'Cộng hai đẳng thức được 2a = 18.'],
+        ['Hiệu diện tích bằng 16 cm².',false,'Hiệu bằng (a + b)(a − b) = 56 cm².'],
+        ['Tổng chu vi của hai hình là 56 cm.',true,'Tổng chu vi bằng 4(a + b).'],
+        ['Tổng diện tích của hai hình bằng 196 cm².',false,'a² + b² = 9² + 5² = 106 cm².']
+      ]),
+      sa('Cho x + y = 7 và xy = 10. Tính x² + y².',29,'Từ (x + y)² = x² + 2xy + y², suy ra 49 − 20 = 29.'),
+      sa('Một hình thoi có chu vi 52 cm và một đường chéo dài 10 cm. Tính độ dài đường chéo còn lại theo cm.',24,'Cạnh hình thoi bằng 13 cm. Hai nửa đường chéo là cạnh góc vuông của tam giác có cạnh huyền 13 cm. Nửa còn lại dài √(169 − 25) = 12 cm.'),
+      sa('Phân tích 2x² − 8x thành nhân tử rồi tìm tổng các nghiệm của 2x² − 8x = 0.',4,'Ta có 2x(x − 4) = 0, nên hai nghiệm là 0 và 4.')
+    ],
+    9:[
+      mc('Hệ x + 2y = 3 và 2x + 4y = 6 có bao nhiêu nghiệm?',['0','1','2','Vô số'],3,'Phương trình thứ hai thu được bằng cách nhân phương trình đầu với 2.'),
+      mc('Tập nghiệm của phương trình (x − 2)/(x − 2) = 1 là gì?',['ℝ','ℝ ∖ {2}','{2}','∅'],1,'Đẳng thức đúng với mọi x thỏa điều kiện mẫu khác 0, tức x ≠ 2.'),
+      mc('Tam giác ABC vuông tại A. Đẳng thức nào đúng?',['sin B = sin C','sin B = cos C','tan B = tan C','cos B = 1 − cos C'],1,'B và C phụ nhau, nên sin B = cos C.'),
+      mc('Cộng hai phương trình 2x + 3y = 7 và x − 3y = 2, ta nhận được gì?',['x = 3','x = 5','y = 3','3x + 6y = 9'],0,'Hai hạng tử chứa y triệt tiêu. Còn 3x = 9.'),
+      ds('Một rạp bán 30 vé gồm vé người lớn 60 nghìn đồng và vé trẻ em 40 nghìn đồng, thu tổng cộng 1 440 nghìn đồng. Gọi x, y lần lượt là số vé người lớn và số vé trẻ em.',[
+        ['Tổng số vé được biểu diễn bằng x + y = 30.',true,'Hai loại vé được tính vào cùng tổng.'],
+        ['Phương trình doanh thu là 40x + 60y = 1 440.',false,'Hệ số của x phải là 60, của y là 40.'],
+        ['Rạp bán 12 vé người lớn.',true,'Lấy 60x + 40y = 1 440 trừ 40(x + y) = 1 200, được 20x = 240.'],
+        ['Doanh thu từ hai loại vé bằng nhau.',true,'Hai khoản thu là 12 × 60 và 18 × 40, cùng bằng 720 nghìn đồng.']
+      ]),
+      ds('Xét phương trình (x² − 9)/(x − 3) = 6.',[
+        ['Điều kiện xác định là x ≠ 3.',true,'Mẫu bằng 0 tại x = 3.'],
+        ['Vế trái bằng x + 3 tại mọi giá trị thỏa điều kiện xác định.',true,'Phân tích tử thành (x − 3)(x + 3) rồi rút gọn.'],
+        ['Phương trình có nghiệm x = 3.',false,'Ứng viên x = 3 bị loại vì mẫu bằng 0.'],
+        ['Nếu thay vế phải bằng 4 thì nghiệm là x = 1.',true,'Giải x + 3 = 4 được x = 1, thỏa điều kiện.']
+      ]),
+      ds('Một chiếc thang dài 5 m tựa vào bức tường thẳng đứng. Chân thang cách chân tường 3 m. Mặt đất nằm ngang và thang hợp với mặt đất góc α.',[
+        ['Đầu thang cao 4 m so với mặt đất.',true,'Dùng định lí Pythagore: √(25 − 9) = 4.'],
+        ['Cos α = 4/5.',false,'Cạnh kề là 3 m nên cos α = 3/5.'],
+        ['Tan α lớn hơn 1.',true,'Cạnh đối dài 4 m và cạnh kề dài 3 m.'],
+        ['Góc α nhỏ hơn 45°.',false,'Vì cạnh đối dài hơn cạnh kề, góc α lớn hơn 45°.']
+      ]),
+      sa('Tìm m để hệ mx + y = 4 và 2x − y = 2 có nghiệm với x = 2.',1,'Phương trình hai cho y = 2. Thay vào phương trình đầu được 2m + 2 = 4.'),
+      sa('Một dốc thẳng đi lên 1,2 m trên đoạn nằm ngang dài 9 m. Đi thêm 6 m theo phương ngang trên cùng độ dốc thì độ cao tăng thêm bao nhiêu mét?',0.8,'Hai đoạn có cùng góc dốc. Độ cao tăng thêm bằng 6 × 1,2/9 = 0,8 m.'),
+      sa('Tìm tổng các nghiệm của (3x − 1)(x + 2) = 0.',-5/3,'Các nghiệm lần lượt là 1/3 và −2. Tổng bằng −5/3.','−5/3')
+    ],
+    10:[
+      ds('Một nhóm gồm 30 học sinh. Có 19 bạn chọn bóng đá, 14 bạn chọn cầu lông và 7 bạn chọn cả hai.',[
+        ['Có 12 bạn chỉ chọn bóng đá.',true,'19 − 7 = 12.'],
+        ['Có 33 bạn chọn ít nhất một môn.',false,'Cần trừ 7 bạn được đếm hai lần. Kết quả là 26.'],
+        ['Có 4 bạn không chọn môn nào.',true,'30 − 26 = 4.'],
+        ['Số bạn chỉ chọn đúng một môn là 19.',true,'Có 12 bạn chỉ chọn bóng đá và 7 bạn chỉ chọn cầu lông.']
+      ]),
+      ds('Trong tam giác ABC, cho AB = AC = 10 cm và ∠BAC = 120°. Gọi H là trung điểm BC.',[
+        ['Góc ABC bằng 60°.',false,'Hai góc đáy bằng nhau và có tổng 60°, nên mỗi góc bằng 30°.'],
+        ['AH vuông góc với BC.',true,'Trung tuyến ứng với đáy tam giác cân đồng thời là đường cao.'],
+        ['BC dài 10√3 cm.',true,'BC² = 100 + 100 − 200 cos 120° = 300.'],
+        ['Diện tích tam giác bằng 50√3 cm².',false,'Diện tích bằng 10 × 10 × sin 120° : 2 = 25√3 cm².']
+      ]),
+      sa('Tập A có 6 phần tử, trong đó có hai phần tử phân biệt a và b. Có bao nhiêu tập con của A chứa a nhưng không chứa b?',16,'a bắt buộc có, b bắt buộc vắng mặt. Mỗi phần tử trong bốn phần tử còn lại có hai lựa chọn, cho 2⁴ = 16 tập.'),
+      sa('Điểm (x; y) thuộc miền x ≥ 0, y ≥ 0, 2x + y ≤ 8 và x + 2y ≤ 8. Tìm giá trị lớn nhất của x + y.',16/3,'Cộng hai bất phương trình được 3(x + y) ≤ 16. Dấu bằng đạt khi x = y = 8/3.','16/3')
+    ],
+    11:[
+      ds('Xét hàm số y = sin(x + π/3) − sin(x − π/3).',[
+        ['Hàm số xác định trên ℝ.',true,'Cả hai biểu thức sin đều xác định với mọi x thực.'],
+        ['Biểu thức thu gọn bằng √3 cos x.',true,'Dùng hiệu hai sin để được 2 cos x sin(π/3).'],
+        ['Hàm số là hàm lẻ.',false,'Sau khi rút gọn thu được một bội khác 0 của hàm cos, là hàm chẵn.'],
+        ['Trên [0; π], hàm số đạt giá trị nhỏ nhất tại x = π.',true,'Cos x giảm từ 1 đến −1 trên đoạn này.']
+      ]),
+      ds('Xét phương trình 3 sin x + 4 cos x = c. Đặt góc φ sao cho cos φ = 3/5, sin φ = 4/5.',[
+        ['Vế trái có thể viết thành 5 sin(x + φ).',true,'Khai triển công thức cộng rồi nhân 5.'],
+        ['Phương trình có nghiệm thực với c = −6.',false,'Vế trái chỉ nhận giá trị từ −5 đến 5.'],
+        ['Với c = 5, phương trình có đúng một nghiệm trên [0; 2π).',true,'Mỗi chu kì, sin nhận giá trị 1 đúng một lần.'],
+        ['Với c = 0, hai nghiệm liên tiếp chênh nhau 2π.',false,'Sin bằng 0 tại các bội của π, nên khoảng cách là π.']
+      ]),
+      sa('Có bao nhiêu giá trị nguyên của m để phương trình 5 sin x − 12 cos x = m có nghiệm thực?',27,'Biên độ là √(5² + 12²) = 13. Vì vậy m có thể là mọi số nguyên từ −13 đến 13, gồm 27 giá trị.'),
+      sa('Phương trình cos² x = sin² x có bao nhiêu nghiệm trên đoạn [0; 3π]?',6,'Phương trình tương đương cos 2x = 0, tức x = π/4 + kπ/2. Chọn k từ 0 đến 5.')
+    ],
+    12:[
+      ds('Một vật chuyển động theo trục thẳng. Tọa độ ở thời điểm t thuộc [0; 5] là s(t) = t³ − 6t² + 9t, tính bằng mét.',[
+        ['Vận tốc tại t = 0 bằng 9 m/s.',true,'s′(0) = 9.'],
+        ['Vật chuyển động theo chiều âm trong khoảng (1; 3).',true,'Vận tốc 3(t − 1)(t − 3) âm trên khoảng đó.'],
+        ['Vật chỉ đổi chiều một lần.',false,'Vận tốc đổi dấu ở cả t = 1 và t = 3.'],
+        ['Từ t = 0 đến t = 3, quãng đường bằng 0.',false,'Vật đi từ tọa độ 0 đến 4 rồi trở lại 0, nên quãng đường là 8 m.']
+      ]),
+      ds('Cho f(x) = (x² − 4)/(x − 2). Xét đồ thị trên tập xác định của f.',[
+        ['Tập xác định là ℝ ∖ {2}.',true,'Mẫu bằng 0 tại x = 2.'],
+        ['x = 2 là tiệm cận đứng.',false,'Hàm bằng x + 2 khi x ≠ 2, nên giới hạn tại 2 bằng 4.'],
+        ['Đồ thị không chứa điểm (2; 4).',true,'Hoành độ 2 không thuộc tập xác định.'],
+        ['Hàm số nghịch biến trên (2; +∞).',false,'Trên khoảng đó f(x) = x + 2, có hệ số góc 1 nên đồng biến.']
+      ]),
+      sa('Cho f′(x) = (x + 3)(x − 2)²(x − 5) trên ℝ. Tổng hoành độ các điểm cực trị của f bằng bao nhiêu?',2,'Đạo hàm chỉ đổi dấu ở hai nghiệm đơn −3 và 5. Tổng bằng 2.'),
+      sa('Một xưởng có chi phí sản xuất x sản phẩm là C(x) = x² + 144, với x nguyên dương. Tại sản lượng nào chi phí trung bình mỗi sản phẩm nhỏ nhất?',12,'Chi phí trung bình là x + 144/x = 24 + (x − 12)²/x. Giá trị nhỏ nhất đạt tại x = 12.')
+    ]
+  };
+  const paper=(grade,school,source,scope,minutes,questions)=>{
+    const bank=[
+      ...questions.map((q,i)=>({...q,id:'paper-g'+grade+'-mid1-'+(i+1)})),
+      ...additions[grade].map((q,i)=>({...q,id:'paper-g'+grade+'-mid1-extra-'+(i+1)}))
+    ];
+    return {id:'mid1-school-g'+grade,grade,title:'Giữa kỳ I · Theo đề '+school,source,scope,minutes,period:'mid1',chapterId:'g'+grade+'-c1',
+      questions:buExamFormat.flatMap(({type})=>bank.filter(q=>q.type===type).map(q=>({...q,tags:[type==='mcq'?'recognize':'apply']})))};
+  };
   return [
     paper(6,'THCS Phú Diễn','https://thcs.toanmath.com/2026/11/de-giua-hoc-ki-1-toan-6-nam-2026-2027-truong-thcs-phu-dien-ha-noi.html',
       'Số tự nhiên, chia hết, ƯCLN – BCNN và hình học trực quan.',35,[

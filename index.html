@@ -1118,7 +1118,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 @media(max-width:500px){.picker-tabs [role=tab]{font-size:12px;padding-inline:6px}.level-choices .segment-btn{font-size:12px}}
 </style>
 <link rel="stylesheet" href="theme.css?v=2">
-<link rel="stylesheet" href="learning.css?v=4">
+<link rel="stylesheet" href="learning.css?v=5">
 <link rel="stylesheet" href="workbook.css?v=3">
 </head>
 <body>
@@ -1203,7 +1203,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 </dialog>
 <script src="settings.js?v=2"></script>
 <script src="data/curriculum.js"></script>
-<script src="study-store.js?v=6"></script>
+<script src="study-store.js?v=7"></script>
 <script src="class-api.js"></script>
 <script src="math.js?v=4"></script>
 <script src="classroom.js?v=4"></script>
@@ -1215,8 +1215,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <script src="data/buBookPDFs.js?v=1"></script>
 <script src="data/lesson-source-pages.js?v=1"></script>
 <script src="data/reviewed-lessons.js?v=2"></script>
-<script src="data/reference-papers.js?v=1"></script>
-<script src="learning.js?v=5"></script>
+<script src="data/reference-papers.js?v=2"></script>
+<script src="learning.js?v=6"></script>
 <script src="workbook.js?v=4"></script>
 <script>
 const heroArt = "<svg class=\"hero-art\" viewBox=\"70 0 320 282\" aria-hidden=\"true\">\n  <defs>\n    <linearGradient id=\"hero-fill\" x1=\"0\" x2=\"1\" y1=\"0\" y2=\"1\" gradientUnits=\"objectBoundingBox\">\n      <stop offset=\"0\" stop-color=\"#79a88c\" stop-opacity=\".22\"/>\n      <stop offset=\"1\" stop-color=\"#74a183\" stop-opacity=\".05\"/>\n    </linearGradient>\n  </defs>\n  <circle cx=\"230\" cy=\"152\" r=\"122\" fill=\"none\" stroke=\"#508368\" stroke-opacity=\".56\" stroke-width=\"1.4\"/>\n  <circle cx=\"230\" cy=\"152\" r=\"61\" fill=\"none\" stroke=\"#8a6809\" stroke-opacity=\".7\" stroke-width=\"1.4\" stroke-dasharray=\"4 5\"/>\n  <path d=\"M230 30L124.35 213H335.65Z\" fill=\"url(#hero-fill)\" stroke=\"#2f6a4b\" stroke-width=\"2.2\"/>\n  <path d=\"M230 30V213M219 213V202H230\" fill=\"none\" stroke=\"#8a6809\" stroke-width=\"1.8\" stroke-dasharray=\"5 5\"/>\n  <path d=\"M124 213H336\" stroke=\"#2f6a4b\" stroke-width=\"2.2\"/>\n  <path d=\"M173 207V219M286 207V219\" stroke=\"#2f6a4b\" stroke-width=\"1.5\"/>\n  <g fill=\"#806522\">\n    <circle cx=\"230\" cy=\"30\" r=\"4\"/>\n    <circle cx=\"124.35\" cy=\"213\" r=\"4\"/>\n    <circle cx=\"335.65\" cy=\"213\" r=\"4\"/>\n    <circle cx=\"230\" cy=\"152\" r=\"4\"/>\n  </g>\n  <g fill=\"#285441\" font-family=\"Georgia,serif\" font-style=\"italic\" font-size=\"17\">\n    <text x=\"225\" y=\"19\">A</text>\n    <text x=\"105\" y=\"229\">B</text>\n    <text x=\"343\" y=\"229\">C</text>\n    <text x=\"242\" y=\"158\">O</text>\n    <text x=\"225\" y=\"237\">H</text>\n  </g>\n  <g stroke=\"#806522\" stroke-opacity=\".68\" stroke-width=\"1.5\">\n    <path d=\"M85 76v18m-9-9h18M372 62v15m-7.5-7.5h15M387 179v18m-9-9h18M75 240v13m-6.5-6.5h13\"/>\n  </g>\n</svg>";
@@ -1447,10 +1447,15 @@ function openQuiz(q) {
     active.unshift({id:q.id,chapterId:q.chapterId,lessonId:q.lessonId,title:q.title,mode:q.mode,type:q.type,count:q.questions.length,grade:state.user.grade});
   }
   setNav('exam');
-  mountQuiz();
-  if(q.mode==='semester')startExamClock(q);
-  renderQuiz(true);
-  $('#questionPanel').focus({preventScroll:true});
+  if(q.mode==='semester') {
+    mountTimedPaper();
+    $('#paperTitle').focus({preventScroll:true});
+    startExamClock(q);
+  } else {
+    mountQuiz();
+    renderQuiz(true);
+    $('#questionPanel').focus({preventScroll:true});
+  }
   window.scrollTo({top:0,behavior:'instant'});
 }
 function quizMath(value) { return theoryFormula(value); }
@@ -1475,7 +1480,7 @@ function mountQuiz() {
   $('#main').innerHTML =
     '<div class="quiz-head"><button class="btn secondary" id="leaveQuiz">← Tạm dừng</button>'+
     '<div><h2>'+esc(quiz.title)+'</h2><p class="sub">'+
-    (quiz.paperId?'Đề thực hành theo trường':quiz.mode==='semester'?'Đề mô phỏng · '+typeNames[quiz.type]:quiz.mode==='review'?'Ôn câu sai':typeNames[quiz.type]||typeNames.mixed)+'</p></div>'+
+    (quiz.mode==='review'?'Ôn câu sai':typeNames[quiz.type]||typeNames.mixed)+'</p></div>'+
     '<button class="btn secondary" id="quizTheory">'+icon('book')+' Lý thuyết</button>'+
     '<div class="timer" id="quizCount"></div></div>'+
     '<dialog class="chapter-picker" id="chapterPicker" aria-labelledby="chapterPickerTitle"><div id="config"></div></dialog>'+
@@ -1490,9 +1495,8 @@ function mountQuiz() {
     quiz.questions.length+'"><div></div></div><div class="palette">'+palette+'</div>'+
     '<button class="btn secondary full" id="finishButton"><span id="finishLabel">Nộp bài</span> '+icon('check')+'</button></aside></div>';
   $('#leaveQuiz').onclick = leaveQuiz;
-  $('#quizTheory').hidden = quiz.mode==='semester';
   $('#quizTheory').onclick = ()=>{
-    const chapter=chapterById(quiz.chapterId), dialog=$('#chapterPicker');
+    const chapter=chapterById(quiz.questions[state.index].chapterId||quiz.chapterId), dialog=$('#chapterPicker');
     dialog.classList.add('lesson-picker','theory-open');
     $('#config').innerHTML='<header class="picker-head"><div class="between"><h2 id="chapterPickerTitle">'+esc(chapter.title)+
       '</h2><button type="button" class="round" id="closeChapter" aria-label="Đóng">×</button></div></header>'+
@@ -1514,33 +1518,31 @@ function renderQuiz(animate=false) {
   updateQuizControls();
 }
 function updateQuizControls() {
+  if(state.quiz.mode==='semester'){updateTimedPaperControls();return;}
   const {questions} = state.quiz;
   const q = questions[state.index];
   const graded = !!state.feedback[q.id];
   const answered = Object.keys(state.feedback).length;
   const locked = quizLocked();
   const last = state.index===questions.length-1;
-  const timed=state.quiz.mode==='semester';
-  const filled=timed ? questions.filter(answerReady).length : answered;
-  if(!timed) $('#quizCount').textContent=answered+'/'+questions.length+' đã chấm';
-  else $('#quizTrack').setAttribute('aria-label','Số câu đã trả lời');
-  $('#quizTrack').setAttribute('aria-valuenow',String(filled));
-  $('#quizTrack > div').style.width = filled/questions.length*100+'%';
+  $('#quizCount').textContent=answered+'/'+questions.length+' đã chấm';
+  $('#quizTrack').setAttribute('aria-valuenow',String(answered));
+  $('#quizTrack > div').style.width = answered/questions.length*100+'%';
   $('#questionPanel').setAttribute('aria-busy',String(state.checking));
   $('#leaveQuiz').textContent = state.pausing?'Đang lưu…':'← Tạm dừng';
   $('#finishLabel').textContent = state.submitting?'Đang nộp…':'Nộp bài';
   $('#checkAnswer').textContent = state.checking?'Đang chấm…':'Chấm câu';
-  $('#nextQuestion').textContent = last?(timed?'Nộp bài':'Hoàn tất'):'Câu tiếp →';
+  $('#nextQuestion').textContent = last?'Hoàn tất':'Câu tiếp →';
   $('#skipQuestion').textContent = last?'Nộp bài':'Bỏ qua';
-  $('#skipQuestion').hidden = $('#checkAnswer').hidden = timed || graded;
-  $('#nextQuestion').hidden = !timed && !graded;
+  $('#skipQuestion').hidden = $('#checkAnswer').hidden = graded;
+  $('#nextQuestion').hidden = !graded;
   $('#previous').disabled = !state.index || locked;
   $('#checkAnswer').disabled = locked || !answerReady(q);
   $('#leaveQuiz').disabled = $('#quizTheory').disabled = $('#finishButton').disabled =
     $('#skipQuestion').disabled = $('#nextQuestion').disabled = locked;
   $$('#questionPanel [data-choice],#questionPanel [data-tf],#shortAnswer').forEach(control=>control.disabled=locked||graded);
   const hint = $('#hintButton');
-  if (hint) { hint.hidden=timed; hint.disabled=timed || locked || hint.getAttribute('aria-busy')==='true'; }
+  if (hint) hint.disabled=locked || hint.getAttribute('aria-busy')==='true';
   $$('[data-jump]').forEach((button,i)=>{
     const id = questions[i].id;
     const f = state.feedback[id];
@@ -1608,9 +1610,9 @@ function setDraft(q,value) {
   persistDraft();
   scheduleSave();
   $('#saveStatus').textContent = '';
+  if(state.quiz.mode==='semester'){updateTimedPaperControls();return;}
   $('[data-jump="'+state.index+'"]').classList.add('draft');
   $('#checkAnswer').disabled = !answerReady(q);
-  if(state.quiz.mode==='semester')updateQuizControls();
 }
 function bindQuestion(q) {
   $$('[data-choice]').forEach(button=>button.onclick=()=>{
@@ -1798,7 +1800,7 @@ async function finish(expired=false) {
   }
 }
 function resultDetail(f,i){const q=f.question;let answers=q.type==='mcq'?'<div class="options">'+q.options.map((v,j)=>'<div class="option '+(j===f.answer?'correct':j===f.selected?'wrong':'')+'"><span class="letter">'+'ABCD'[j]+'</span><span>'+quizMath(v)+'</span></div>').join('')+'</div>':q.type==='tf'?'<div class="tf-list">'+f.parts.map((p,j)=>'<div class="tf-row '+(p.correct?'right':'wrong')+'"><div class="tf-statement">'+'abcd'[j]+') '+quizMath(p.text)+'</div>'+figureHTML(p.figure)+'<div class="tf-why">Bạn chọn: '+(p.selected===null?'Bỏ trống':p.selected?'Đúng':'Sai')+' · Đáp án: '+(p.answer?'Đúng':'Sai')+'<br>'+quizMath(p.explanation)+'</div></div>').join('')+'</div>':'<p class="sub" style="margin-top:18px">Bạn điền: <b>'+quizMath(f.selected??'Bỏ trống')+'</b> · Đáp án: <b>'+quizMath(f.answer)+'</b></p>';return'<section class="result-item card"><div class="between"><span class="tag">Câu '+(i+1)+' · '+typeNames[q.type]+'</span><span class="sub">'+f.correct+'/'+f.units+' đúng</span></div><p class="mistake-prompt">'+questionPrompt(q.prompt)+'</p>'+figureHTML(q.figure)+answers+'<div class="explanation">'+quizMath(f.explanation)+'</div></section>';}
-function renderResult(r){state.result=r;state.page='result';state.quiz=null;setNav(state.role==='host'?'host':'history');const qs=state.reviewWrong?r.details.filter(f=>!f.allCorrect):r.details;$('#main').innerHTML='<section class="result-hero card"><span class="tag">HOÀN THÀNH</span><div class="result-score"><b>'+r.score.toLocaleString('vi-VN')+'</b><small>điểm luyện tập / 10</small></div><h2>'+esc(r.title)+'</h2><div class="result-metrics"><span><strong>'+r.correct+'/'+r.total+'</strong>Ý trả lời đúng</span><span><strong>'+Math.round(r.correct/r.total*100)+'%</strong>Độ chính xác</span><span><strong>'+Math.floor(r.seconds/60)+'p '+r.seconds%60+'s</strong>Thời gian</span></div>'+(state.role==='student'?'<div class="result-actions"><button class="btn" id="againButton">Đề mới →</button><button class="btn secondary" id="backStudy">Về luyện thi</button></div>':'<button class="btn secondary" id="backHost" style="margin-top:20px">← Về học sinh</button>')+'</section><div class="review-head between"><h3>Xem lại bài làm</h3><button id="toggleReview">'+(state.reviewWrong?'Xem tất cả':'Chỉ xem câu sai')+'</button></div>'+qs.map(f=>resultDetail(f,r.details.indexOf(f))).join('')+(!qs.length?'<div class="empty card"><div class="empty-icon">✓</div><h3>Không có câu sai</h3></div>':'');$('#toggleReview').onclick=()=>{state.reviewWrong=!state.reviewWrong;renderResult(r);};if($('#backStudy'))$('#backStudy').onclick=()=>navigate('exam');if($('#againButton'))$('#againButton').onclick=()=>{learningOptions.chapter=r.chapterId;learningOptions.lesson=r.lessonId||'';learningOptions.mode=r.mode==='semester'?'semester':'custom';if(r.period)learningOptions.period=r.period;if(r.chapterIds)learningOptions.selected=r.chapterIds;navigate('exam');};if($('#backHost'))$('#backHost').onclick=()=>showHostStudent(state.hostStudent);window.scrollTo(0,0);}
+function renderResult(r){state.result=r;state.page='result';state.quiz=null;setNav(state.role==='host'?'host':'history');const qs=state.reviewWrong?r.details.filter(f=>!f.allCorrect):r.details;$('#main').innerHTML='<section class="result-hero card"><span class="tag">HOÀN THÀNH</span><div class="result-score"><b>'+r.score.toLocaleString('vi-VN')+'</b><small>điểm / 10</small></div><h2>'+esc(r.title)+'</h2><div class="result-metrics"><span><strong>'+r.correct+'/'+r.total+'</strong>Ý trả lời đúng</span><span><strong>'+Math.round(r.correct/r.total*100)+'%</strong>Độ chính xác</span><span><strong>'+Math.floor(r.seconds/60)+'p '+r.seconds%60+'s</strong>Thời gian</span></div>'+examResultPoints(r)+(state.role==='student'?'<div class="result-actions"><button class="btn" id="againButton">Đề mới →</button><button class="btn secondary" id="backStudy">Về luyện thi</button></div>':'<button class="btn secondary" id="backHost" style="margin-top:20px">← Về học sinh</button>')+'</section><div class="review-head between"><h3>Xem lại bài làm</h3><button id="toggleReview">'+(state.reviewWrong?'Xem tất cả':'Chỉ xem câu sai')+'</button></div>'+qs.map(f=>resultDetail(f,r.details.indexOf(f))).join('')+(!qs.length?'<div class="empty card"><div class="empty-icon">✓</div><h3>Không có câu sai</h3></div>':'');$('#toggleReview').onclick=()=>{state.reviewWrong=!state.reviewWrong;renderResult(r);};if($('#backStudy'))$('#backStudy').onclick=()=>navigate('exam');if($('#againButton'))$('#againButton').onclick=()=>{learningOptions.chapter=r.mode==='practice'&&r.chapterIds?.length?'all':r.chapterId;learningOptions.lesson=r.lessonId||'';learningOptions.mode=r.paperId?'papers':r.mode==='semester'?'semester':'custom';if(r.period)learningOptions.period=r.period;if(r.mode==='semester'&&r.chapterIds)learningOptions.selected=r.chapterIds;navigate('exam');};if($('#backHost'))$('#backHost').onclick=()=>showHostStudent(state.hostStudent);window.scrollTo(0,0);}
 async function showHistory(){state.page='history';setNav('history');$('#main').innerHTML=loadingHTML();try{await refreshDashboard();if(state.page!=='history')return;$('#main').innerHTML=pageHeading('Kết quả của bạn')+studentStats()+(state.dashboard.history.length?'<section class="history-list card">'+state.dashboard.history.map(r=>'<button class="history-row" data-result="'+r.id+'"><div><strong>'+esc(r.title)+'</strong><small>Lớp '+r.grade+' · '+r.correct+'/'+r.total+' ý đúng</small></div><span class="history-date sub" style="font-size:11px">'+new Date(r.date).toLocaleDateString('vi-VN')+'</span><span class="score-pill">'+r.score.toLocaleString('vi-VN')+'</span><span>›</span></button>').join('')+'</section>':emptyHTML('Chưa có bài đã nộp'));$$('[data-result]').forEach(e=>e.onclick=()=>busy(e,'Đang mở…',async()=>renderResult(await rpc('getResult',state.token,e.dataset.result))));}catch(e){fail(e);}}
 async function showMistakes(){state.page='mistakes';setNav('mistakes');$('#main').innerHTML=loadingHTML();try{const items=await rpc('getMistakes',state.token,'');if(state.page!=='mistakes')return;$('#main').innerHTML=pageHeading('Sổ lỗi',items.length+' câu cần luyện lại')+(items.length?items.map(x=>'<section class="mistake card"><span class="tag">'+esc(x.chapterTitle)+'</span><p class="mistake-prompt">'+esc(x.question.prompt)+'</p><div class="trap-chip" style="display:inline-block">'+esc(x.trap)+'</div><br><button class="retry-lesson" data-retry="'+x.chapterId+'" data-lesson="'+esc(x.lessonId||'')+'">Ôn lại câu sai →</button></section>').join(''):emptyHTML('Chưa có câu cần ôn lại'));$$('[data-retry]').forEach(e=>e.onclick=()=>busy(e,'Đang mở…',async()=>openQuiz(await rpc('startQuiz',state.token,{chapterId:e.dataset.retry,lessonId:e.dataset.lesson,count:6,mode:'review'}))));}catch(e){fail(e);}}
 function loadingHTML(){return'<div class="empty"><div class="spinner" style="margin:auto"></div></div>';}
