@@ -1262,7 +1262,10 @@ function statCard(value,label,n){return'<div class="stat card"><div class="stat-
 function studentStats(){const d=state.dashboard;return'<div class="stats">'+statCard(d.total,'Câu đã luyện','book')+statCard(d.accuracy+'%','Độ chính xác','target')+statCard(d.completedChapters,'Chương đã xong','check')+'</div>';}
 function progressBar(percent){return'<div class="quiz-progress"><div style="width:'+Math.max(0,Math.min(100,percent))+'%"></div></div>';}
 const practiceLevels = {recognize:'Nhận biết',apply:'Vận dụng',trap:'Dễ sai'};
-function theoryFormula(raw) { return buMath.render(raw); }
+function theoryFormula(raw) {
+  const spaced=String(raw??'').replace(/(?<=[\p{L}\p{N})])(?=\\(?:sin|cos|tan|cot)\b)/gu,' ');
+  return buMath.render(spaced);
+}
 function theoryLines(text) {
   const lines = [];
   let depth = 0;
@@ -1271,7 +1274,7 @@ function theoryLines(text) {
     if ('([{'.includes(text[i])) depth++;
     if (')]}'.includes(text[i])) depth = Math.max(0,depth-1);
     const explicit = text.slice(i,i+4)===' // ';
-    if (explicit || (!depth && text[i]===';')) {
+    if (explicit || (!depth && (text[i]===';'||text[i]==='\n'))) {
       lines.push(text.slice(start,i).trim());
       if (explicit) i += 3;
       start = i+1;
@@ -1280,7 +1283,7 @@ function theoryLines(text) {
   return [...lines,text.slice(start).trim()].filter(Boolean);
 }
 function factsFrom(text) {
-  return text.split(/ \/\/ |(?<=[.!?])\s+(?=[\p{Lu}])/u).map(part=>part.trim()).filter(Boolean);
+  return text.split(/ \/\/ |\r?\n|(?<=[.!?])\s+(?=[\p{Lu}])/u).map(part=>part.trim()).filter(Boolean);
 }
 function theoryParagraphs(text) {
   return factsFrom(text).map(line=>'<p>'+theoryFormula(line)+'</p>').join('');
@@ -1324,6 +1327,14 @@ function practiceHTML([prompt,hint,answer]) {
     '<details><summary>Đối chiếu đáp án</summary>'+theoryParagraphs(answer)+'</details></section>';
 }
 function theoryHTML(chapter,inQuiz) {
+  const lessonId=inQuiz?state.quiz?.lessonId:'';
+  const reviewed=workbookLessons(chapter).filter(lesson=>lesson.review&&(lessonId?lesson.id===lessonId:buReviewedChapters.includes(chapter.id)));
+  if(inQuiz&&reviewed.length)return '<article class="outline" aria-label="Đề cương chương">'+reviewed.map(lesson=>
+    '<section class="outline-topic paper-card"><h3>'+theoryFormula(lesson.title)+'</h3>'+reviewedTheory(lesson)+
+    lesson.review.methods.map(method=>'<details class="workbook-method"><summary><strong>'+theoryFormula(method.title)+'</strong></summary>'+
+      '<div class="method-detail">'+outlineFormula(method.formula,new Set())+'<ol class="paper-steps">'+
+      method.steps.map(step=>'<li>'+theoryFormula(step)+'</li>').join('')+'</ol>'+method.worked.map(example=>outlineExample(example)).join('')+
+      '</div></details>').join('')+bookSourceLink(lesson)+'</section>').join('')+'</article>';
   const sections = chapterReading[chapter.id];
   const figures = chapterVisuals(chapter.id);
   const ideas = sections.map(({title,intro,formulas,short,notes,visuals,table,diagrams=[],core=[]},index)=>{
@@ -1442,7 +1453,7 @@ function openQuiz(q) {
   $('#questionPanel').focus({preventScroll:true});
   window.scrollTo({top:0,behavior:'instant'});
 }
-function quizMath(value) { return buMath.render(value); }
+function quizMath(value) { return theoryFormula(value); }
 function questionPrompt(s) {
   return quizMath(s).replace(/Khẳng định nào (SAI|ĐÚNG)\?/g,'<span class="command">Khẳng định nào <em>$1</em>?</span>')
     .replace(/\n/g,'<br>');
