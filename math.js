@@ -27,6 +27,7 @@ const buMath = (() => {
       .replace(/<=>/g, '⇔').replace(/=>/g, '⇒')
       .replace(/<=/g, '≤').replace(/>=/g, '≥').replace(/!=/g, '≠')
       .replace(/⟂/g, '⊥')
+      .replace(/\\(sin|cos|tan|cot|ln|log)(?![A-Za-z])/g, '$1')
       .replace(/\\(?:times|cdot|sum|mid)(?![A-Za-z])/g, word=>({'\\times':'×','\\cdot':'·','\\sum':'∑','\\mid':'∣'})[word])
       .replace(/(?<=[a-zA-Z0-9])[ \t]*\*[ \t]*(?=[a-zA-Z0-9])/g, ' × ')
       .replace(/(?<=[0-9)²³⁴])-(?=[0-9a-zA-Z(])/g, ' − ')
@@ -62,7 +63,7 @@ const buMath = (() => {
     return span('math-root', '<span>√</span>' + span('math-rad', body));
   }
   function format(text) {
-    const pattern = /\\(frac|sqrt|vec|widehat|overrightarrow|overline|text)(?=\{)|√|([_^])|([⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿᵐ]+)|([₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎ₙₘ]+)/gu;
+    const pattern = /\\(frac|binom|sqrt|vec|widehat|overrightarrow|overline|text)(?=\{)|√|([_^])|([⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿᵐ]+)|([₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎ₙₘ]+)/gu;
     let result = '', end = 0;
     for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
       const next = pattern.lastIndex;
@@ -77,10 +78,14 @@ const buMath = (() => {
         const first = group(text, next) || (match[0] === '√' ? group(text, next, '(', ')') : null) ||
           ((match[2] || match[0] === '√') && single ? { text: single[0], end: next + single[0].length } : null);
         if (!first) continue;
-        const fraction = match[1] === 'frac' ? group(text, first.end) : null;
-        if (match[1] === 'frac' && !fraction) continue;
+        const pair = match[1] === 'frac' || match[1] === 'binom';
+        const fraction = pair ? group(text, first.end) : null;
+        if (pair && !fraction) continue;
         const rendered = format(first.text);
-        if (fraction) body = span('math-frac', '<span>' + rendered + '</span><span>' + format(fraction.text) + '</span>');
+        if (fraction) {
+          const stacked='<span>' + rendered + '</span><span>' + format(fraction.text) + '</span>';
+          body=match[1]==='binom'?span('math-binom','('+span('math-stack',stacked)+')'):span('math-frac',stacked);
+        }
         else if (match[1] === 'sqrt' || match[0] === '√') body = root(rendered);
         else if (match[1] === 'text') body = span('math-prose', escapeHTML(first.text));
         else if (match[1] === 'widehat') body = span('math-angle', rendered);

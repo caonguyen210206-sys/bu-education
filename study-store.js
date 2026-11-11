@@ -216,20 +216,52 @@ const buStudy = (() => {
       save(current);
       return quiz(r,data);
     },
-    async bookExercises(id,chapterId) {
-      const current=profile(id), chapter=chapters.get(chapterId);
-      if(!chapter||chapter.grade!==current.user.grade)throw Error('Chương không thuộc lớp đã chọn.');
-      const data=await bank(chapterId);
-      const used=new Set(), selected=[];
-      for(const type of ['mcq','tf','short']) {
-        const pool=data.chapterIds.map(id=>data.questions[id]).filter(q=>q.type===type);
-        for(const level of tags) {
-          const next=pool.find(q=>q.tags.includes(level)&&!used.has(q.id)&&!selected.some(previous=>previous.focus===q.focus))||
-            pool.find(q=>q.tags.includes(level)&&!used.has(q.id));
-          if(next){selected.push(next);used.add(next.id);}
+    async bookWorksheet(id,chapterId) {
+      const chapter=chapters.get(chapterId);
+      if(chapter?.grade!==profile(id).user.grade)throw Error('Chương không thuộc lớp đã chọn.');
+      const data=await bank(chapterId), current=profile(id);
+      const used=new Set();
+      const scoped=(ids,perType)=>{
+        const picked=[];
+        for(const type of ['mcq','tf','short']) {
+          const pool=ids.map(id=>data.questions[id]).filter(q=>q&&q.type===type);
+          for(const level of tags.slice(0,perType)) {
+            const unique=q=>!used.has(q.id)&&!picked.some(prior=>prior.focus===q.focus);
+            const next=pool.find(q=>unique(q)&&q.tags.includes(level))||pool.find(unique)||pool.find(q=>!used.has(q.id));
+            if(next){picked.push(next);used.add(next.id);}
+          }
+        }
+        return picked.map(q=>{
+          const previous=current.bookResponses?.[q.id];
+          return {question:publicQuestion(q),hint:q.hint||q.rule||'',feedback:previous?
+            grade(q,previous.response,previous.hinted,true):null};
+        });
+      };
+      const end=scoped(data.chapterIds,3);
+      const lessons=Object.fromEntries(Object.entries(data.byLesson).map(([lesson,ids])=>[lesson,scoped(ids,1)]));
+      const examples={};
+      for(const [lesson,ids] of Object.entries(data.byLesson)){
+        const pool=ids.map(id=>data.questions[id]).filter(q=>q&&q.type!=='tf'&&!used.has(q.id)&&q.explanation?.length>=45);
+        const example=pool.find(q=>q.tags.includes('apply')&&q.type==='short')||pool.find(q=>q.tags.includes('apply'))||pool[0];
+        if(example){
+          used.add(example.id);
+          examples[lesson]={question:publicQuestion(example),answer:example.answer,explanation:example.explanation};
         }
       }
-      return selected;
+      return {end,lessons,examples};
+    },
+    async checkBookExercise(id,chapterId,lessonId,qid,response,hinted) {
+      const chapter=chapters.get(chapterId);
+      if(chapter?.grade!==profile(id).user.grade)throw Error('Chương không thuộc lớp đã chọn.');
+      const data=await bank(chapterId), current=profile(id);
+      const ids=lessonId?data.byLesson[lessonId]:data.chapterIds;
+      if(!ids?.includes(qid))throw Error('Bài tập không thuộc phạm vi này.');
+      const question=data.questions[qid], mark=grade(question,response,Boolean(hinted));
+      const responses=current.bookResponses||={};
+      responses[qid]={response:mark.selected,hinted:mark.hinted};
+      record(current,{chapterId,lessonId},question,mark,data.chapterIds.includes(qid));
+      save(current);
+      return mark;
     },
     async startSemester(id,request) {
       const initial=profile(id);

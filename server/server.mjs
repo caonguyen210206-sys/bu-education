@@ -378,8 +378,8 @@ async function api(req,path,payload) {
   }
   fail(404,'Không tìm thấy thao tác.');
 }
-const staticFiles=new Set(['index.html','admin.html','admin.js','settings.js','study-store.js','class-api.js','classroom.js','math.js','learning.js','theme.css','learning.css',
-  'data/curriculum.js','data/book-notes.js','data/exams.js','assets/Inter.woff','assets/STIXTwoText.woff','assets/STIXTwoText-Italic.woff','assets/bu-icon.svg']);
+const staticFiles=new Set(['index.html','admin.html','admin.js','settings.js','study-store.js','class-api.js','classroom.js','math.js','learning.js','theme.css','learning.css','workbook.js','workbook.css',
+  'data/curriculum.js','data/book-notes.js','data/exams.js','data/buLessonMap.js','data/buLessonExtras.js','data/buBookPDFs.js','assets/Inter.woff','assets/STIXTwoText.woff','assets/STIXTwoText-Italic.woff','assets/bu-icon.svg']);
 function isStaticPath(path) {
   const name=path.slice(site.length+1);
   return staticFiles.has(name)||/^data\/g(?:[1-9]|1[0-2])-c[1-9][0-9]?\.json$/.test(name);

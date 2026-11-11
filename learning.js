@@ -2,14 +2,6 @@
 
 const examKinds = {mid1:'Giữa kỳ I', end1:'Cuối kỳ I', mid2:'Giữa kỳ II', end2:'Cuối kỳ II'};
 const learningOptions = {chapter:'', lesson:'', period:'mid1', mode:'custom', selected:null};
-const bookNoteMethods = {
-  'g8-c1':'Lập đa thức từ hình',
-  'g11-c1':'Giải phương trình a sin x + b cos x = c',
-  'g11-c4':'Chứng minh đường thẳng song song với mặt phẳng',
-  'g12-c4':'Tính diện tích giữa hai đồ thị khi chúng đổi vị trí',
-  'g12-c6':'Tính xác suất toàn phần trước khi dùng Bayes'
-};
-
 function gradeField(grade, id) {
   return '<label class="learn-field">Khối lớp<select id="'+id+'">'+gradeOptions(grade)+'</select></label>';
 }
@@ -28,96 +20,22 @@ async function changeLearningGrade(grade, page) {
     enter(current,page);
   } catch (error) { fail(error); }
 }
-function bookTile(chapter,index) {
-  const parts=chapterReading[chapter.id]||[];
-  const methods=parts.reduce((count,part)=>count+part.methods.length,0)+(buBookNotes[chapter.id]&&!bookNoteMethods[chapter.id]?1:0);
-  const chapterProgress=progress(chapter.id);
-  return '<button class="book-tile" type="button" data-book="'+esc(chapter.id)+'">'+
-    '<span class="book-number">'+String(index+1).padStart(2,'0')+'</span>'+
-    '<span><strong>'+esc(formatChapter(chapter))+'</strong><small>'+parts.length+' mục lý thuyết · '+methods+' dạng bài</small></span>'+
-    icon('arrow')+'<span class="book-progress"><span class="book-progress-track" aria-hidden="true">'+
-    '<span style="width:'+chapterProgress.completion+'%"></span></span><small>'+chapterProgress.completion+'% đã luyện</small></span></button>';
-}
-function renderBookShelf() {
-  state.page='study';
+function renderPortalHome() {
+  state.page='home';
   state.quiz=null;
-  setNav('study');
-  const grade=state.user.grade, chapters=group(grade).chapters;
-  $('#main').innerHTML='<div class="learn-cover book-cover"><div><h1>Sách Toán '+grade+'</h1>'+
-    '<p>Lý thuyết, phương pháp giải và bài tập theo từng chương.</p></div>'+gradeField(grade,'bookGrade')+'</div>'+
-    '<section class="book-library" aria-labelledby="chapterListTitle"><div class="chapter-list-head"><div><h2 id="chapterListTitle">Mục lục</h2>'+
-    '<p>'+chapters.length+' chương · Kết nối tri thức</p></div><label class="chapter-search">'+icon('search')+
-    '<input id="bookSearch" type="search" placeholder="Tìm chương" aria-label="Tìm chương"></label></div>'+
-    '<div class="book-grid">'+chapters.map(bookTile).join('')+'</div><p id="bookEmpty" hidden>Không tìm thấy chương phù hợp.</p></section>'+
-    (buClassApi.base?'<label class="study-share"><input type="checkbox" id="shareStudy"> Chia sẻ tên, lớp và tiến độ với Host</label>':'');
-  bindSharing();
-  $('#bookGrade').onchange=e=>changeLearningGrade(e.target.value,'study');
-  $('#bookSearch').oninput=e=>{
-    const query=normalize(e.target.value);
-    for(const item of $$('[data-book]')) item.hidden=!normalize(item.textContent).includes(query);
-    $('#bookEmpty').hidden=!!$('[data-book]:not([hidden])');
-  };
-  $$('[data-book]').forEach(button=>button.onclick=()=>openBookChapter(button.dataset.book));
-}
-function openBookChapter(id) {
-  const chapters=group(state.user.grade).chapters;
-  const index=chapters.findIndex(chapter=>chapter.id===id);
-  if(index<0) return;
-  const chapter=chapters[index];
-  const parts=chapterReading[id]||[];
-  state.page='book';
-  state.chapter=id;
-  setNav('study');
-  $('#main').innerHTML='<div class="reader-head"><button type="button" class="reader-back" id="bookIndex">← Mục lục Toán '+state.user.grade+'</button>'+
-    '<h1>'+theoryFormula(chapter.title)+'</h1></div><div class="reader-layout">'+
-    '<aside class="reader-toc"><strong>Trong chương này</strong><a href="#outline-theory">Lý thuyết</a>'+
-    parts.map((part,i)=>'<a class="toc-indent" href="#topic-'+(i+1)+'">'+esc(part.title)+'</a>').join('')+
-    '<a href="#outline-methods">Phân dạng bài tập</a><a href="#book-exercises">Bài tập cuối chương</a></aside>'+
-    '<div class="reader-body">'+theoryHTML(chapter,true)+
-    '<section class="chapter-exercises" id="book-exercises" aria-labelledby="exercise-heading"><h3 class="outline-heading" id="exercise-heading"><span>C</span>Bài tập cuối chương</h3>'+
-    '<div data-book-exercises role="status">Đang mở bài tập…</div></section>'+
-    '<nav class="reader-pages" aria-label="Chuyển chương">'+
-    (chapters[index-1]?'<button class="btn secondary" id="previousChapter">← Chương trước</button>':'<span></span>')+
-    (chapters[index+1]?'<button class="btn secondary" id="nextChapter">Chương tiếp →</button>':'')+'</nav></div></div>';
-  for(const link of $$('.reader-toc a'))link.onclick=event=>{
-    event.preventDefault();
-    $(link.getAttribute('href')).scrollIntoView({block:'start'});
-  };
-  $('#bookIndex').onclick=()=>{renderBookShelf();window.scrollTo(0,0);};
-  if($('#previousChapter')) $('#previousChapter').onclick=()=>openBookChapter(chapters[index-1].id);
-  if($('#nextChapter')) $('#nextChapter').onclick=()=>openBookChapter(chapters[index+1].id);
-  const exercisePanel=$('[data-book-exercises]');
-  rpc('bookExercises',state.token,id).then(questions=>{
-    if(!exercisePanel.isConnected)return;
-    exercisePanel.removeAttribute('role');
-    exercisePanel.innerHTML=questions.map((q,i)=>{
-      const choices=q.type==='mcq'?'<ol type="A">'+q.options.map(option=>'<li>'+quizMath(option)+'</li>').join('')+'</ol>':
-        q.type==='tf'?'<ol type="a">'+q.statements.map(s=>'<li>'+quizMath(s.text)+figureHTML(s.figure)+'</li>').join('')+'</ol>':'';
-      const answer=q.type==='mcq'?'ABCD'[q.answer]:q.type==='tf'?q.statements.map((s,j)=>'abcd'[j]+') '+(s.answer?'Đúng':'Sai')).join(' · '):q.answer;
-      const explanation=q.type==='tf'?'<ol type="a">'+q.statements.map(s=>'<li>'+quizMath(s.explanation)+'</li>').join('')+'</ol>':theoryParagraphs(q.explanation);
-      return '<article class="book-exercise"><div class="exercise-line"><strong>Bài '+(i+1)+'</strong><span>'+esc(typeNames[q.type])+'</span></div>'+
-        '<div>'+questionPrompt(q.prompt)+'</div>'+figureHTML(q.figure)+choices+
-        '<details><summary>Đáp án và lời giải</summary><strong>'+quizMath(answer)+'</strong>'+explanation+'</details></article>';
-    }).join('')+'<button type="button" class="btn" id="bookToPractice">Luyện thêm chương này '+icon('arrow')+'</button>';
-    $('#bookToPractice').onclick=()=>{learningOptions.chapter=id;learningOptions.lesson='';learningOptions.mode='custom';navigate('exam');window.scrollTo(0,0);};
-  }).catch(error=>{if(exercisePanel.isConnected)exercisePanel.textContent=error.message;});
-  window.scrollTo(0,0);
-}
-function additionalBookExample(id,method) {
-  if(bookNoteMethods[id]!==method) return '';
-  const [, , , prompt, solution, answer, trap]=buBookNotes[id];
-  return '<div class="paper-worked">'+outlineExample(['Bài giải bổ sung',prompt,solution,answer,trap],true)+'</div>';
-}
-function workedBookNote(id,index) {
-  const note=buBookNotes[id];
-  if(!note||bookNoteMethods[id]) return '';
-  const [title,formula,steps,prompt,solution,answer,trap]=note;
-  return '<details class="outline-method paper-card book-feature"><summary class="paper-heading"><span class="paper-index"><abbr title="Dạng toán">DT</abbr><b>'+String(index).padStart(2,'0')+'</b></span>'+
-    '<span>'+theoryFormula(title)+'</span><span class="method-chevron" aria-hidden="true"></span></summary>'+
-    '<div class="paper-body"><div class="paper-copy"><h5>Công thức và điều kiện</h5>'+
-    outlineFormula(formula,new Set())+'<h5>Các bước làm</h5>'+
-    '<ol class="paper-steps">'+steps.map(step=>'<li>'+theoryFormula(step)+'</li>').join('')+'</ol>'+
-    outlineExample([title,prompt,solution,answer,trap])+'</div></div></details>';
+  setNav('home');
+  const name=state.user.name.trim().split(/\s+/).at(-1);
+  const cards=[
+    ['study','book','Tự học','Mở sách Toán theo chương, học từng dạng và kiểm tra đáp án ngay trên trang.'],
+    ['exam','target','Luyện thi','Tạo đề theo bài hoặc ôn giữa kỳ, cuối kỳ.'],
+    ['online','classroom','Học viên online','Dùng mật khẩu học viên để xem lại buổi học và bài được giao.']
+  ];
+  $('#main').innerHTML='<div class="portal-home"><header class="hub-cover"><h1>Chào '+esc(name)+'</h1><p>Toán lớp '+state.user.grade+
+    '</p>'+heroArt+'</header><section class="hub-grid" aria-label="Chọn khu học">'+cards.map(([key,asset,title,copy])=>
+      '<button type="button" class="hub-card" data-hub="'+key+'"><span class="hub-card-icon">'+icon(asset)+'</span>'+icon('arrow')+
+      '<strong>'+title+'</strong><small>'+copy+'</small></button>').join('')+
+      '</section><a href="admin.html" class="hub-host">Cổng Host ↗</a></div>';
+  $$('[data-hub]').forEach(card=>card.onclick=()=>navigate(card.dataset.hub));
 }
 function examSources(grade,period) {
   return (buExamSources[grade]?.[period]||[]).map(([title,url,year])=>

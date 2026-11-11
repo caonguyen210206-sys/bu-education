@@ -7,7 +7,11 @@ const buClassroom = (() => {
   function labelLink() {
     try {
       const url=new URL(buSettings.zaloUrl);
-      if(url.protocol==='https:'&&url.hostname==='zalo.me') return '<a class="btn secondary" href="'+esc(url.href)+'" target="_blank" rel="noopener noreferrer">Đăng ký lớp qua Zalo</a>';
+      if(url.protocol==='https:'&&url.hostname==='zalo.me') {
+        const number=String(buSettings.zaloPhone||'');
+        return '<a class="btn secondary" href="'+esc(url.href)+'" target="_blank" rel="noopener noreferrer">Đăng ký học qua Zalo'+
+          (number?'<span class="zalo-number">'+esc(number)+'</span>':'')+'</a>';
+      }
     } catch {}
     return '';
   }
@@ -16,14 +20,15 @@ const buClassroom = (() => {
     const registration=labelLink();
     panel.innerHTML='<section class="replay-card">'+(portal?'':'<h3>Xem lại buổi học</h3>')+
       '<p>Video, tài liệu và bài tập dành cho học viên đang học online.</p>'+
-      (buClassApi.base?'<form class="class-login"><label for="'+credentialId+'">Mật khẩu lớp</label>'+
-        '<input id="'+credentialId+'" name="password" type="password" autocomplete="current-password" required maxlength="180" placeholder="Nhập mật khẩu giáo viên đã cấp">'+
-        '<button class="btn" type="submit">Mở tài liệu lớp</button></form>':
-        '<p class="online-status" role="status">Kho tài liệu và bài tập của lớp đang chờ kết nối máy chủ.</p>')+
+      '<form class="class-login"><label for="'+credentialId+'">Mật khẩu học viên</label>'+
+      '<input id="'+credentialId+'" name="password" type="password" autocomplete="current-password" required maxlength="180" '+
+        (buClassApi.base?'':'disabled ')+'placeholder="Nhập mật khẩu giáo viên đã cấp">'+
+      '<button class="btn" type="submit" '+(buClassApi.base?'':'disabled')+'>Mở tài liệu lớp</button></form>'+
+      (buClassApi.base?'':'<p class="online-status" role="status">Kho tài liệu và bài tập của lớp đang chờ kết nối máy chủ.</p>')+
       (registration?'<div class="online-actions">'+registration+'</div>':'')+
       '<p class="login-error" data-class-status role="status"></p></section>';
     const form=panel.querySelector('form');
-    if(!form) return;
+    if(!form||!buClassApi.base) return;
     form.onsubmit=async event=>{
       event.preventDefault();
       const submit=form.querySelector('button');
