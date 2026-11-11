@@ -1214,7 +1214,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <script src="data/buLessonExtras.js?v=1"></script>
 <script src="data/buBookPDFs.js?v=1"></script>
 <script src="data/lesson-source-pages.js?v=1"></script>
-<script src="data/reviewed-lessons.js?v=1"></script>
+<script src="data/reviewed-lessons.js?v=2"></script>
 <script src="data/reference-papers.js?v=1"></script>
 <script src="learning.js?v=5"></script>
 <script src="workbook.js?v=4"></script>
@@ -1583,7 +1583,8 @@ function questionHTML(q) {
       (f?'<p class="sub" style="margin-top:12px">Đáp án <b>'+quizMath(f.answer)+'</b></p>':'');
   }
   const label = q.tags?.includes('trap')?'extension':'';
-  const level = q.tags?.map(t=>practiceLevels[t]).filter(Boolean).join(' · ')||q.level;
+  const level = state.quiz.paperId?({mcq:'Phần I',tf:'Phần II',short:'Phần III'}[q.type]):
+    q.tags?.map(t=>practiceLevels[t]).filter(Boolean).join(' · ')||q.level;
   return '<div class="question-top"><span class="tag">Câu '+(state.index+1)+' · '+typeNames[q.type]+'</span>'+
     '<span class="level '+label+'">'+esc(level)+'</span></div>'+
     '<div class="qprompt">'+questionPrompt(q.prompt)+'</div>'+figureHTML(q.figure)+body+
