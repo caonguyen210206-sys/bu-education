@@ -9,6 +9,15 @@ const bookNoteMethods = {
   'g12-c6':'Tính xác suất toàn phần trước khi dùng Bayes'
 };
 const bookLessonTitles = ['Kiến thức cần nhớ','Phương pháp và các dạng toán','Bài tập tự luyện'];
+const sameBookMethod = {
+  'g6-b1':'Từ mô tả sang liệt kê',
+  'g7-b3':'So sánh lũy thừa bằng dấu và cùng cơ số',
+  'g7-b23':'Dùng tỉ lệ nghịch',
+  'g9-b9':'Rút gọn căn rồi mới trục căn ở mẫu',
+  'g10-b25':'Tìm hệ số của một lũy thừa trong khai triển Newton',
+  'g11-b16':'Khử dạng '+'\\frac{0}{0} của biểu thức có căn',
+  'g12-b3':'Phân biệt điểm khuyết và tiệm cận đứng'
+};
 const bookTitleFixes = {
   'g6-b18':'Bài 18. Hình tam giác đều. Hình vuông. Hình lục giác đều',
   'g6-b19':'Bài 19. Hình chữ nhật. Hình thoi. Hình bình hành. Hình thang cân'
@@ -84,7 +93,7 @@ function noteAsExample(note) {
 function bookMethod(method,topic,index,chapter,figures,scope) {
   const {title,lead='',steps=[],example,worked=[],tip,diagram,practice}=method;
   const matched=(topic.notes||[]).find(([,name])=>name===title||name&&title.includes(name));
-  const related=matched?.[3]||topic.formula||topic.formulas||'';
+  const related=method.formula||matched?.[3]||topic.formula||topic.formulas||'';
   const figure=diagram?studyFigure(diagram):(topic.diagrams?.length===1?studyFigure(topic.diagrams[0]):
     topic.visuals?.length===1?figures[topic.visuals[0]]||'':'');
   const extra=bookNoteMethods[chapter.id]===title?noteAsExample(buBookNotes[chapter.id]):'';
@@ -103,7 +112,13 @@ function lessonSectionHeading(letter,title,id) {
 }
 function getBookMethods(lesson) {
   const methods=lesson.topics.flatMap(topic=>topic.methods.map(method=>({topic,method})));
-  if(lesson.extra)methods.push({topic:lesson.extra,method:lesson.extra.method});
+  if(lesson.extra){
+    const supplemental=lesson.extra.method;
+    const related=methods.find(item=>item.method.title===sameBookMethod[lesson.id]);
+    if(related)related.method={...related.method,formula:lesson.extra.formula,
+      steps:supplemental.steps,worked:[...related.method.worked,...supplemental.worked]};
+    else methods.push({topic:lesson.extra,method:supplemental});
+  }
   return methods;
 }
 function bookLessonMarkup(lesson,index,chapter,figures) {
