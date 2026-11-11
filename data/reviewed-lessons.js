@@ -888,5 +888,242 @@ x₁²+x₂²=(x₁+x₂)²−2x₁x₂`],
     short('Hai món hàng giá tổng 300 nghìn đồng. Món A giảm 10%, món B giảm 20%, thanh toán 252 nghìn đồng. Tìm giá gốc món A theo nghìn đồng.',120,'Trừ 0,8 lần phương trình x + y = 300 khỏi 0,9x + 0,8y = 252, được 0,1x = 12.')
   ]);
 
+  book('g6-b27',2,32,[
+    ['Hai chiều của bài toán phân số',[
+      'Gọi A là lượng ban đầu, r là phân số và B là phần tương ứng. Biết A và r thì nhân. Biết B và r khác 0 thì chia để tìm A.',
+      'Phân biệt phần của lượng ban đầu và phần của lượng còn lại. Sau mỗi bước, xác định lại lượng đang được coi là một đơn vị.'
+    ],'B = A × r\nA = B : r, với r ≠ 0']
+  ],[
+    m('fraction-of-number','Tìm giá trị phân số của một số','Đề cho số ban đầu và hỏi một phần bằng phân số của số đó.',
+      F`\text{Giá trị phần}=\text{Số ban đầu}×\frac{m}{n}`,
+      ['Xác định số ban đầu và phân số ứng với phần cần tìm.','Chia số ban đầu cho mẫu rồi nhân với tử, hoặc nhân phân số rồi rút gọn.','Giữ nguyên đơn vị của số ban đầu.'],
+      ['Tìm 3/8 của 56 m.',['Chia 56 thành 8 phần bằng nhau, được 7 m mỗi phần.','Lấy 3 phần, được 21 m.'],'21 m.'],
+      short('Tìm 5/12 của 84 kg.',35,'Một phần mười hai của 84 kg là 7 kg. Năm phần bằng 35 kg.')),
+    m('fraction-context','Tìm phần đã dùng và phần còn lại','Có dữ kiện sử dụng một phần của toàn bộ hoặc của lượng còn sau bước trước.',
+      'Phần còn lại = lượng trước đó − phần đã dùng.',
+      ['Ghi lượng đang làm mốc ở mỗi lần.','Tìm phần đã dùng bằng phép nhân.','Trừ phần đã dùng và cập nhật lượng làm mốc nếu còn bước sau.'],
+      ['Có 60 lít nước, dùng 2/5 rồi dùng tiếp 1/3 lượng còn lại. Còn bao nhiêu lít?',['Sau lần đầu còn 60 − 24 = 36 lít.','Lần sau dùng 12 lít.'],'24 lít.'],
+      short('Có 90 m vải, bán 1/3 số vải rồi bán tiếp 1/4 số còn lại. Còn bao nhiêu mét?',45,'Sau lần đầu còn 60 m. Lần sau bán 15 m nên còn 45 m.')),
+    m('whole','Tìm số ban đầu khi biết giá trị một phân số','Đề cho phần đã biết, cần suy ra toàn bộ.',
+      F`\text{Số ban đầu}=\text{Giá trị phần}:\frac{m}{n}`,
+      ['Xác định phần đã cho chiếm bao nhiêu của toàn bộ.','Chia phần đã cho cho phân số tương ứng.','Thử lại bằng phép nhân.'],
+      ['24 quả chiếm 3/7 số quả trong rổ. Hỏi rổ có bao nhiêu quả?',['Một phần là 24 : 3 = 8 quả.','Cả rổ gồm 7 phần.'],'56 quả.'],
+      short('Đã đọc 28 trang, bằng 2/7 số trang của một quyển sách. Quyển sách có bao nhiêu trang?',98,'Một phần bằng 14 trang. Cả quyển gồm 7 phần nên có 98 trang.')),
+    m('complement','Tìm số ban đầu qua phần còn lại','Đề cho phân số đã dùng nhưng số đo lại là phần còn lại.',
+      'Phân số còn lại = 1 − phân số đã dùng.',
+      ['Đổi phân số đã dùng sang phân số còn lại.','Lấy số lượng còn lại chia cho phân số còn lại.','Kiểm tra bằng cách tính phần đã dùng và cộng lại.'],
+      ['Bán 3/5 số gạo, còn 18 kg. Tính số gạo lúc đầu.',['Phần còn là 2/5.','Tính 18 : (2/5) = 45.'],'45 kg.'],
+      short('Dùng hết 3/8 số tiền thì còn 50 nghìn đồng. Ban đầu có bao nhiêu nghìn đồng?',80,'Phần còn lại là 5/8. Tính 50 : (5/8) = 80.'))
+  ]);
+
+  book('g7-b13',1,86,[
+    ['Các yếu tố tương ứng',[
+      'Kí hiệu tam giác ABC bằng tam giác DEF quy định A ứng với D, B ứng với E, C ứng với F. Các cạnh và góc tương ứng bằng nhau.',
+      'Trường hợp cạnh – cạnh – cạnh dùng ba cặp cạnh tương ứng. Xác định thứ tự đỉnh từ các cặp cạnh rồi mới ghi tên hai tam giác.'
+    ],'AB = DE, BC = EF, CA = FD ⇒ △ABC = △DEF']
+  ],[
+    m('correspondence','Xác định cạnh và góc tương ứng','Hai tam giác đã được cho bằng nhau bằng kí hiệu.',
+      '△ABC = △DEF ⇒ A ↔ D, B ↔ E, C ↔ F',
+      ['Ghép đỉnh theo thứ tự trong kí hiệu.','Ghép cạnh bằng cách thay hai đầu mút.','Ghép góc theo đỉnh giữa của kí hiệu góc.'],
+      ['Cho △ABC = △HIK. Cạnh nào tương ứng với BC?',['B ứng với I và C ứng với K.'],'Cạnh IK.'],
+      mcq('Cho △MNP = △QRS. Góc MPN tương ứng với góc nào?',['QRS','QSR','SQR','RQS'],1,'M → Q, P → S, N → R nên MPN → QSR.')),
+    m('sss','Chứng minh hai tam giác bằng nhau theo cạnh – cạnh – cạnh','Tìm đủ ba cặp cạnh bằng nhau, có thể gồm một cạnh chung.',
+      'Ba cặp cạnh tương ứng bằng nhau ⇒ hai tam giác bằng nhau.',
+      ['Liệt kê cạnh nào bằng nhau theo giả thiết.','Tìm cạnh chung hoặc dùng tính chất đã biết cho cặp còn lại.','Ghi hai tam giác theo đúng thứ tự và nêu trường hợp cạnh – cạnh – cạnh.'],
+      ['Hai tam giác ABC và ADC có AB = AD, CB = CD. Chứng minh chúng bằng nhau.',['AC là cạnh chung.','Ghép A với A, B với D và C với C.'],'△ABC = △ADC theo cạnh – cạnh – cạnh.'],
+      mcq('Trong hai tam giác ABM và ACM, biết AB = AC, BM = CM. Dữ kiện nào hoàn tất chứng minh theo cạnh – cạnh – cạnh?',['AM = AM','AB ∥ AC','Góc BAM vuông','BC là cạnh chung'],0,'AM là cạnh của cả hai tam giác.')),
+    m('equal-angle','Suy ra hai góc bằng nhau từ hai tam giác bằng nhau','Mỗi góc cần so sánh nằm trong một tam giác.',
+      'Hai góc ở hai đỉnh tương ứng của hai tam giác bằng nhau thì bằng nhau.',
+      ['Chọn hai tam giác chứa hai góc cần chứng minh.','Chứng minh chúng bằng nhau và ghi thứ tự đỉnh.','Đọc ra cặp góc tương ứng, rồi dùng thêm tính chất phân giác nếu đề yêu cầu.'],
+      ['Nếu △ABM = △ACM, hãy giải thích vì sao AM là tia phân giác góc BAC khi M nằm trong góc.',['Góc BAM tương ứng với góc CAM.','Hai góc bằng nhau và AM nằm giữa AB, AC.'],'AM là tia phân giác góc BAC.'],
+      mcq('Biết △ABP = △CDQ và góc BAP bằng 35°. Góc DCQ bằng bao nhiêu?',['35°','55°','70°','145°'],0,'B → D, A → C, P → Q nên BAP tương ứng DCQ.'))
+  ]);
+
+  add('g8-b6','https://thcs.toanmath.com/thcs-pdf/ly-thuyet-va-phan-dang-bai-tap-toan-8-hoc-ki-1-ngo-duc-tai.pdf','Phân dạng Toán 8 · Ngô Đức Tài',58,[
+    ['Ba hằng đẳng thức',[
+      'Nhận dạng đủ hai biểu thức A và B, kể cả khi một biểu thức có hệ số hoặc nhiều hạng tử.',
+      'Trong bình phương của tổng hoặc hiệu, số hạng giữa là ±2AB. Trong hiệu hai bình phương, phải là phép trừ giữa hai bình phương.'
+    ],'(A + B)² = A² + 2AB + B²\n(A − B)² = A² − 2AB + B²\nA² − B² = (A − B)(A + B)']
+  ],[
+    m('mental-identity','Tính nhanh bằng hằng đẳng thức','Hai số gần một mốc tròn hoặc là một cặp tổng và hiệu.',
+      '(a − b)(a + b) = a² − b²',
+      ['Tìm mốc ở giữa hai thừa số hoặc mốc tròn gần số cần bình phương.','Viết lại các số thành A + B và A − B theo đúng trường hợp.','Tính từng bình phương rồi cộng hoặc trừ.'],
+      ['Tính 98 × 102.',['98 = 100 − 2, 102 = 100 + 2.','Lấy 100² − 2².'],'9 996.'],
+      short('Tính 47 × 53 bằng hằng đẳng thức.',2491,'Hai số là 50 − 3 và 50 + 3. Tính 50² − 3² = 2 491.')),
+    m('simplify-identity','Rút gọn rồi tính giá trị biểu thức','Biểu thức có bình phương hoặc tích của tổng và hiệu.',
+      '(A + B)² − (A − B)² = 4AB',
+      ['Khai triển từng nhóm, giữ dấu trừ phía trước ngoặc.','Gộp các hạng tử đồng dạng.','Thay giá trị biến vào biểu thức đã rút gọn.'],
+      ['Tính (x + 2)² − (x − 2)² tại x = 3.',['Thu gọn được 8x.','Thay x = 3.'],'24.'],
+      short('Tính (x + 3)² − (x − 3)² tại x = −2.',-24,'Hiệu hai bình phương của tổng và hiệu bằng 4 × x × 3 = 12x.')),
+    m('independent','Chứng minh biểu thức không phụ thuộc biến','Cần chỉ ra sau khi rút gọn, mọi hạng tử chứa biến đều triệt tiêu.',
+      '(x + a)² − x² − 2ax = a²',
+      ['Khai triển biểu thức.','Gộp và kiểm tra hệ số của từng hạng tử chứa biến bằng 0.','Kết luận giá trị còn lại là hằng số với mọi giá trị cho phép.'],
+      ['Giải thích vì sao (x − 2)² − x² + 4x không phụ thuộc x.',['Khai triển được x² − 4x + 4 − x² + 4x.'],'Chỉ còn 4.'],
+      short('Giá trị không đổi của (x + 5)² − x² − 10x bằng bao nhiêu?',25,'Sau khi khai triển, x² và 10x triệt tiêu.')),
+    m('identity-proof','Chứng minh đẳng thức','Cần biến đổi một vế thành vế kia hoặc cả hai về cùng dạng.',
+      'Dùng hằng đẳng thức đúng với mọi A, B.',
+      ['Chọn vế có dạng dễ khai triển hơn.','Áp dụng hằng đẳng thức rồi thu gọn.','Đối chiếu với vế còn lại và nêu đẳng thức đúng với mọi giá trị xác định.'],
+      ['Chứng minh (x + y)² + (x − y)² = 2(x² + y²).',['Khai triển hai bình phương.','Hai hạng tử 2xy trái dấu triệt tiêu.'],'Hai vế cùng bằng 2x² + 2y².'],
+      mcq('Đẳng thức nào đúng với mọi x?',['(x − 1)² = x² − 1','(x + 1)² = x² + 1','(x − 1)(x + 1) = x² − 1','(x − 1)² = x² − 2x − 1'],2,'Dùng hiệu hai bình phương với A = x, B = 1.')),
+    m('extreme-square','Tìm giá trị lớn nhất hoặc nhỏ nhất bằng bình phương','Biểu thức bậc hai có thể viết thành một bình phương cộng hằng số.',
+      '(x − a)² ≥ 0, đạt 0 khi x = a.',
+      ['Hoàn thành bình phương, ghi hệ số đứng trước bình phương.','Nếu hệ số dương thì tìm giá trị nhỏ nhất. Nếu âm thì tìm giá trị lớn nhất.','Chỉ rõ điều kiện xảy ra dấu bằng.'],
+      ['Tìm giá trị nhỏ nhất của x² − 6x + 14.',['Viết thành (x − 3)² + 5.'],'Bằng 5 khi x = 3.'],
+      short('Tìm giá trị lớn nhất của −x² + 8x − 5.',11,'Viết biểu thức thành 11 − (x − 4)². Giá trị lớn nhất là 11 khi x = 4.'))
+  ]);
+
+  book('g9-b9',1,76,[
+    ['Biến đổi căn thức và điều kiện',[
+      'Căn bậc hai số học luôn không âm. Với biểu thức A, căn của A² bằng |A|. Căn ở mẫu phải xác định và khác 0.',
+      'Chỉ gộp các căn khi dùng được quy tắc tích hoặc thương với điều kiện dấu thích hợp. Rút gọn rồi vẫn giữ điều kiện ban đầu.'
+    ],F`\sqrt{a²b}=|a|\sqrt{b}, b≥0
+\frac{1}{\sqrt{b}}=\frac{\sqrt{b}}{b}, b>0`],
+    ['Liên hợp',[
+      'Khi mẫu là tổng hoặc hiệu hai căn, nhân cả tử lẫn mẫu với liên hợp. Điều kiện mẫu ban đầu khác 0 cần được kiểm tra trước.'
+    ],F`(\sqrt{a}−\sqrt{b})(\sqrt{a}+\sqrt{b})=a−b`]
+  ],[
+    m('extract','Đưa thừa số ra ngoài dấu căn','Biểu thức lấy căn có nhân tử là bình phương.',
+      F`\sqrt{a²b}=|a|\sqrt{b}`,
+      ['Tách một bình phương khỏi biểu thức dưới dấu căn.','Đưa căn của bình phương ra dưới dạng trị tuyệt đối.','Xét dấu của nhân tử theo điều kiện trước khi bỏ trị tuyệt đối.'],
+      ['Rút gọn √(18x²) khi x ≤ 0.',['18x² = (3x)² × 2.','Vì x ≤ 0, |3x| = −3x.'],'−3x√2.'],
+      mcq('Với x < 2, biểu thức √(5(x − 2)²) bằng gì?',['(x − 2)√5','(2 − x)√5','5(2 − x)','−(2 − x)√5'],1,'Căn của (x − 2)² là |x − 2| = 2 − x.')),
+    m('insert','Đưa thừa số vào trong dấu căn','Cần viết tích của một hệ số với căn thành một căn duy nhất.',
+      F`a\sqrt{b}=\sqrt{a²b}\text{ nếu }a≥0;\quad a\sqrt{b}=−\sqrt{a²b}\text{ nếu }a<0`.replaceAll('\\quad ',' '),
+      ['Xác định dấu của hệ số bên ngoài.','Bình phương độ lớn của hệ số rồi nhân vào số dưới căn.','Nếu hệ số ban đầu âm, giữ dấu trừ phía ngoài.'],
+      ['Viết −3√2 thành một căn có dấu trừ ở ngoài.',['Bình phương 3 được 9.','Đưa 9 vào trong, giữ dấu âm.'],'−√18.'],
+      mcq('Biểu thức −2√7 bằng gì?',['√28','−√14','−√28','√14'],2,'Bình phương hệ số 2 rồi nhân 7, giữ dấu trừ ngoài căn.')),
+    m('remove-radicand-denominator','Khử mẫu của biểu thức dưới dấu căn','Trong dấu căn có phân số mà mẫu chưa là số chính phương.',
+      F`\sqrt{\frac{a}{b}}=\frac{\sqrt{ab}}{b}, a≥0, b>0`,
+      ['Đưa mẫu của phân số về bình phương bằng cách nhân cả tử và mẫu với b.','Tách căn của mẫu.','Rút gọn thêm nếu tử có nhân tử chính phương.'],
+      ['Khử mẫu của √(3/5).',['Nhân trong căn được 15/25.','Lấy căn mẫu được 5.'],'√15/5.'],
+      mcq('Biểu thức √(2/7) bằng gì?',['√14/7','√14/2','√2/7','√14/49'],0,'Trong căn 2/7 = 14/49. Căn mẫu bằng 7.')),
+    m('rationalize','Trục căn thức ở mẫu','Căn nằm ở mẫu của một phân thức.',
+      F`\frac{1}{\sqrt{a}+\sqrt{b}}=\frac{\sqrt{a}−\sqrt{b}}{a−b}\text{ khi }a,b≥0, a≠b`,
+      ['Kiểm tra mẫu xác định và khác 0.','Nếu mẫu là một căn, nhân với căn đó. Nếu mẫu là tổng hoặc hiệu, dùng liên hợp.','Rút gọn mẫu và kiểm tra mẫu mới không làm thay đổi miền đã có.'],
+      ['Trục căn ở mẫu của 1/(√5 − 2).',['Nhân tử và mẫu với √5 + 2.','Mẫu mới bằng 5 − 4 = 1.'],'√5 + 2.'],
+      mcq('Biểu thức 2/(√7 + √5) bằng gì?',['√7 + √5','√7 − √5','2√7 − 2√5','1'],1,'Nhân với liên hợp √7 − √5. Mẫu 7 − 5 = 2, rút gọn với tử 2.')),
+    m('compare-radicals','So sánh hai biểu thức chứa căn','Có thể đưa về hai căn không âm hoặc so sánh với một số không âm.',
+      'Nếu A, B ≥ 0 thì A < B ⇔ A² < B².',
+      ['Xét dấu trước khi bình phương.','Nếu cả hai không âm, tính bình phương hoặc đưa cùng dạng căn.','So sánh rồi kết luận đúng chiều.'],
+      ['So sánh 3√2 và 2√5.',['Hai số dương, bình phương lần lượt là 18 và 20.'],'3√2 < 2√5.'],
+      mcq('So sánh 2√6 và 3√3.',['2√6 < 3√3','2√6 > 3√3','Hai số bằng nhau','Không so sánh được'],0,'Hai số dương. Bình phương 24 nhỏ hơn 27.')),
+    m('combine-radicals','Rút gọn tổng và hiệu các căn','Các căn có thể đưa về cùng phần dưới dấu căn.',
+      'a√b + c√b = (a + c)√b.',
+      ['Tách nhân tử chính phương khỏi từng căn.','Nhóm đúng các căn có cùng phần dưới dấu căn.','Cộng hoặc trừ các hệ số, giữ phần căn chung.'],
+      ['Rút gọn √75 − √12 + √3.',['Đổi thành 5√3 − 2√3 + √3.'],'4√3.'],
+      short('Rút gọn 2√50 − √8 − √18 thành k√2. Tìm k.',5,'Các căn lần lượt là 5√2, 2√2, 3√2. Hệ số là 10 − 2 − 3 = 5.')),
+    m('radical-fraction','Rút gọn phân thức chứa căn','Có mẫu chứa căn và biến, có thể phân tích nhân tử theo √x.',
+      F`x−a²=(\sqrt{x}−a)(\sqrt{x}+a),\ x≥0`,
+      ['Ghi điều kiện của từng căn và từng mẫu.','Đặt t = √x nếu cách viết theo t làm lộ nhân tử.','Rút gọn nhân tử khác 0 rồi thay số hoặc giải yêu cầu tiếp theo trên điều kiện cũ.'],
+      ['Rút gọn (x − 9)/(√x − 3).',['Điều kiện x ≥ 0 và x ≠ 9.','Phân tích tử thành (√x − 3)(√x + 3).'],'√x + 3 với x ≥ 0 và x ≠ 9.'],
+      short('Cho P = (x − 16)/(√x − 4) với x ≥ 0, x ≠ 16. Tính P khi x = 25.',9,'Sau rút gọn P = √x + 4. Thay x = 25 được 9.')),
+    m('radical-identity','Chứng minh đẳng thức chứa căn','Mục tiêu là biến đổi về cùng biểu thức trên miền xác định.',
+      F`\sqrt{u²}=|u|`,
+      ['Xác định miền mà hai vế có nghĩa.','Biến đổi vế có căn phức tạp, dùng trị tuyệt đối khi khai căn bình phương.','Nếu muốn kiểm tra bằng bình phương, chứng minh hai vế cùng không âm trước.'],
+      ['Chứng minh √(x² + 4x + 4) = x + 2 khi x ≥ −2.',['Biểu thức dưới căn là (x + 2)².','Vì x + 2 ≥ 0 nên |x + 2| = x + 2.'],'Đẳng thức đúng trên miền đã cho.'],
+      mcq('Đẳng thức nào đúng với mọi x thực?',['√(x²) = x','√(x²) = −x','√(x² + 2x + 1) = |x + 1|','√(x² + 1) = |x| + 1'],2,'Biểu thức x² + 2x + 1 là (x + 1)². Căn số học lấy trị tuyệt đối.'))
+  ]);
+
+  l10(23,779,[
+    ['Chọn cách đếm',[
+      'Quy tắc cộng áp dụng khi chọn một trong nhiều trường hợp loại trừ nhau. Nếu các trường hợp giao nhau, tách thành trường hợp rời hoặc trừ phần giao.',
+      'Quy tắc nhân áp dụng khi một kết quả hoàn thành qua nhiều bước liên tiếp. Đếm số cách ở mỗi bước với các điều kiện đã chọn.'
+    ],'Cộng các trường hợp rời. Nhân số cách của các bước nối tiếp.']
+  ],[
+    m('addition','Quy tắc cộng','Chọn đúng một phương án từ nhiều nhóm không trùng nhau.',
+      'N = n₁ + n₂ + …',
+      ['Tách bài thành những trường hợp không giao nhau.','Đếm trong từng trường hợp.','Cộng các kết quả.'],
+      ['Có 5 đề Toán và 3 đề Vật lí. Chọn đúng một đề.',['Hai loại đề rời nhau.'],'5 + 3 = 8 cách.'],
+      short('Có 7 xe buýt và 4 tàu có thể đi tới cùng một nơi. Chọn một chuyến, có bao nhiêu cách?',11,'Mỗi lựa chọn thuộc đúng một phương tiện. Cộng 7 + 4.')),
+    m('multiplication','Quy tắc nhân','Mỗi phương án cần thực hiện đủ nhiều bước nối tiếp.',
+      'N = n₁ × n₂ × …',
+      ['Ghi các bước hoàn thành một phương án.','Đếm số cách ở mỗi bước, xét các lựa chọn trước đó.','Nhân số cách nếu số lựa chọn mỗi bước cố định.'],
+      ['Có 4 áo, 3 quần và 2 đôi giày. Chọn một bộ gồm mỗi loại một món.',['Có 4, 3, 2 cách lần lượt.'],'24 bộ.'],
+      short('Một mã có một chữ cái chọn từ A, B, C rồi hai chữ số, hai chữ số khác nhau. Có bao nhiêu mã?',270,'Có 3 cách chọn chữ, 10 cách chọn chữ số đầu và 9 cách chọn chữ số sau.')),
+    m('digit-count','Đếm số theo điều kiện chữ số','Cần quan tâm chữ số đầu, chữ số cuối và việc có lặp hay không.',
+      'Chữ số đầu của số có nhiều chữ số khác 0.',
+      ['Điền vị trí bị ràng buộc nhất trước.','Đếm vị trí đầu và những vị trí còn lại theo điều kiện.','Tách trường hợp rời nếu số cách ở các bước thay đổi.'],
+      ['Có bao nhiêu số chẵn hai chữ số khác nhau từ 0, 1, 2, 3?',['Tận cùng 0 cho 3 cách, tận cùng 2 cho 2 cách.'],'5 số.'],
+      short('Có bao nhiêu số lẻ có hai chữ số khác nhau lập từ 0, 1, 2, 3, 4?',6,'Tận cùng có 2 cách (1 hoặc 3). Với mỗi cách, hàng chục có 3 cách vì khác 0 và khác hàng đơn vị.')),
+    m('objects','Chọn đồ vật có điều kiện','Đề cho nhiều loại đồ vật và yêu cầu chọn theo đúng thành phần.',
+      'Chọn mỗi loại một vật: nhân số cách của các loại.',
+      ['Liệt kê các thành phần được phép trong một lựa chọn.','Đếm cách chọn trong từng loại của một trường hợp.','Nếu có nhiều thành phần khác nhau, cộng số cách của các trường hợp rời.'],
+      ['Chọn một sách Toán trong 4 sách và một sách Văn trong 3 sách.',['Chọn đủ hai loại.'],'12 cách.'],
+      short('Có 5 vở xanh, 4 vở đỏ và 3 bút. Chọn đúng một vở và một bút. Có bao nhiêu cách?',27,'Có 5 + 4 = 9 cách chọn vở và 3 cách chọn bút, được 27.')),
+    m('seating','Sắp xếp vào các vị trí','Thứ tự quan trọng, một người hoặc vật thường chỉ dùng một lần.',
+      'Sau khi chọn một người, số người còn lại giảm đi một.',
+      ['Xử lí vị trí có điều kiện trước.','Điền các vị trí còn lại và cập nhật số lựa chọn sau mỗi lần.','Nhân số cách, kiểm tra xem có trường hợp nào bị đếm hai lần.'],
+      ['Sắp 4 người vào 4 ghế hàng ngang, A ngồi ghế đầu.',['Ghế đầu cố định.','Ba ghế còn 3, 2 và 1 cách.'],'6 cách.'],
+      short('Xếp 5 bạn thành một hàng. Bạn An đứng ở một trong hai đầu. Có bao nhiêu cách?',48,'Chọn đầu cho An có 2 cách. Xếp 4 bạn còn lại có 4 × 3 × 2 × 1 = 24 cách.'))
+  ]);
+
+  book('g11-b9',1,83,[
+    ['Số trung bình và giá trị đại diện',[
+      'Mỗi lớp [a; b) được đại diện bằng trung điểm (a + b)/2. Nhân trung điểm với tần số lớp rồi chia tổng cho cỡ mẫu.',
+      'Số trung bình tính từ bảng ghép nhóm là giá trị xấp xỉ.'
+    ],F`\bar{x}=\frac{x₁n₁+x₂n₂+\cdots+x_kn_k}{n₁+n₂+\cdots+n_k}`.replaceAll('\\bar{x}','x̄').replaceAll('\\cdots','…')],
+    ['Trung vị và tứ phân vị',[
+      'Dùng tần số tích lũy để tìm lớp chứa vị trí k, lần lượt là n/4, n/2 và 3n/4. Lấy lớp đầu tiên mà tần số tích lũy đạt đến vị trí đó.',
+      'Gọi L là đầu trái của lớp, C là số giá trị trước lớp, f là tần số lớp và h là độ rộng lớp. Nội suy từ đầu trái.'
+    ],F`Q=L+\frac{k−C}{f}h`],
+    ['Mốt của mẫu ghép nhóm',[
+      'Trong bài có các lớp cùng độ rộng, chọn lớp có tần số lớn nhất. Gọi f là tần số lớp mốt, f₁ và f₂ là tần số lớp liền trước và sau. Nếu mốt nằm ở lớp đầu hoặc cuối, lấy tần số của lớp ngoài bảng bằng 0.',
+      'Mốt là giá trị ước lượng trong lớp mốt. Nếu các lớp cùng đạt tần số cao nhất thì nêu rõ sự đồng hạng, kiểm tra mẫu của công thức trước khi dùng.'
+    ],F`M_o=L+\frac{f−f₁}{(f−f₁)+(f−f₂)}h`]
+  ],[
+    m('median','Tính trung vị của mẫu ghép nhóm','Tìm mức chia mẫu thành hai nửa theo thứ tự.',
+      F`M_e=L+\frac{n/2−C}{f}h`,
+      ['Cộng tần số để tính n và tìm vị trí n/2.','Tìm lớp chứa vị trí này bằng tần số tích lũy.','Thế đúng đầu trái, tần số tích lũy trước lớp, tần số lớp và độ rộng.'],
+      ['Các lớp [0;10), [10;20), [20;30) có tần số 3, 8, 5. Tính trung vị.',['n = 16. Vị trí 8 thuộc lớp thứ hai, có C = 3 và f = 8.','Tính 10 + (8 − 3) × 10/8.'],'16,25.'],
+      short('Ba lớp [0; 10), [10; 20), [20; 30) có tần số 4, 10, 6. Tính trung vị xấp xỉ.',16,'Vị trí n/2 = 10 thuộc lớp [10; 20), với C = 4. Nội suy 10 + (10 − 4) × 10/10 = 16.')),
+    m('quartile','Tìm tứ phân vị từ tần số tích lũy','Đề hỏi Q₁, Q₃ hoặc cần chúng để mô tả mức phân tán.',
+      F`k=\frac{n}{4}\text{ cho }Q₁,\quad k=\frac{3n}{4}\text{ cho }Q₃`.replaceAll('\\quad ',' '),
+      ['Tính vị trí tứ phân vị cần tìm.','Tìm lớp chứa vị trí từ tần số tích lũy, không nhầm với tần số của một lớp.','Nội suy bằng đúng độ rộng của lớp đang dùng.'],
+      ['Các lớp [0;5), [5;10), [10;15) có tần số 4, 8, 8. Tính Q₃.',['n = 20, vị trí 15 nằm trong lớp thứ ba.','Tính 10 + (15 − 12) × 5/8.'],'Q₃ = 11,875.'],
+      short('Các lớp [10; 20), [20; 30), [30; 40) có tần số 2, 8, 6. Tìm Q₁ xấp xỉ.',22.5,'Vị trí n/4 = 4 thuộc lớp [20; 30), với C = 2. Tính 20 + (4 − 2) × 10/8 = 22,5.','22,5')),
+    m('mean','Tính số trung bình theo giá trị đại diện','Đề hỏi giá trị trung bình từ bảng khoảng và tần số.',
+      F`x̄=\frac{\text{tổng trung điểm nhân tần số}}{\text{tổng tần số}}`,
+      ['Tính trung điểm của từng lớp.','Nhân mỗi trung điểm với tần số tương ứng rồi cộng.','Chia cho tổng tần số và làm tròn ở bước cuối nếu được yêu cầu.'],
+      ['Lớp [0; 10) có 3 giá trị, lớp [10; 20) có 7 giá trị. Tính trung bình.',['Hai trung điểm là 5 và 15.','Tính (3 × 5 + 7 × 15)/10.'],'12.'],
+      short('Các lớp [0; 4), [4; 8), [8; 12) có tần số 2, 3, 5. Tính trung bình xấp xỉ.',7.2,'Các trung điểm là 2, 6, 10. Tử bằng 4 + 18 + 50 = 72, mẫu bằng 10.','7,2')),
+    m('mode','Xác định lớp mốt và nội suy mốt','Đề hỏi giá trị phổ biến nhất ước lượng từ các lớp có cùng độ rộng.',
+      F`M_o=L+\frac{f−f₁}{(f−f₁)+(f−f₂)}h`,
+      ['Chọn lớp có tần số lớn nhất.','Lấy hiệu giữa tần số lớp mốt với hai lớp kề.','Thay vào công thức và kiểm tra kết quả nằm trong lớp mốt.'],
+      ['Các lớp [0; 5), [5; 10), [10; 15) có tần số 4, 10, 4. Tính mốt.',['Lớp mốt là lớp giữa, hai hiệu đều bằng 6.','Cộng nửa độ rộng vào 5.'],'7,5.'],
+      short('Các lớp [0; 10), [10; 20), [20; 30) có tần số 3, 9, 7. Tính mốt xấp xỉ.',17.5,'Hiệu trước là 9 − 3 = 6, hiệu sau là 9 − 7 = 2. Tính 10 + 6/(6 + 2) × 10 = 17,5.','17,5'))
+  ]);
+
+  book('g12-b3',1,80,[
+    ['Tiệm cận đứng',[
+      'Đường x = a là tiệm cận đứng nếu có ít nhất một giới hạn một phía của f(x) tại a bằng +∞ hoặc −∞.',
+      'Mẫu bằng 0 chỉ cho một điểm cần kiểm tra. Nếu sau rút gọn, hàm tiến tới một giá trị hữu hạn tại điểm loại thì đồ thị có thể chỉ bị khuyết điểm.'
+    ],'x = a khi f(x) tiến ra vô cực từ ít nhất một phía của a.'],
+    ['Tiệm cận ngang và xiên',[
+      'Tính riêng khi x tiến về +∞ và −∞. Nếu giới hạn của f(x) bằng b thì y = b là tiệm cận ngang theo hướng đó.',
+      'Nếu f(x) − (ax + b) tiến tới 0 và a khác 0, y = ax + b là tiệm cận xiên. Với phân thức có tử hơn mẫu đúng một bậc, chia đa thức để tìm thương.'
+    ],'y = ax + b khi hiệu f(x) − (ax + b) tiến tới 0.']
+  ],[
+    m('chart-asymptotes','Đọc tiệm cận từ bảng biến thiên hoặc đồ thị','Tìm các giới hạn tại điểm loại và hai đầu của trục x.',
+      'Giới hạn vô cực tại x = a ⇒ tiệm cận đứng x = a.',
+      ['Đọc hai đầu x tiến về ±∞ để tìm tiệm cận ngang.','Xem các điểm ngắt trong miền để tìm giới hạn vô cực và tiệm cận đứng.','Đếm mỗi đường thẳng phân biệt một lần.'],
+      ['Cho f(x) tiến tới 3 ở cả hai đầu ±∞, và f(x) tiến tới −∞ khi x tiến tới 2 từ trái.',['Hai đầu cho cùng y = 3.','Một phía đã đủ kết luận x = 2 là tiệm cận đứng.'],'Xác định được hai đường y = 3 và x = 2.'],
+      mcq('Khi x tiến tới +∞, f(x) tiến tới 1. Khi x tiến tới −∞, f(x) tiến tới −1. Đồ thị có bao nhiêu tiệm cận ngang?',['0','1','2','3'],2,'Hai giới hạn hữu hạn khác nhau cho hai đường y = 1 và y = −1.')),
+    m('function-asymptotes','Tìm tiệm cận từ công thức hàm số','Dùng giới hạn hoặc chia đa thức, kiểm tra nhân tử triệt tiêu.',
+      'f(x) = ax + b + R(x), với R(x) tiến tới 0 ⇒ y = ax + b.',
+      ['Tìm tập xác định và các điểm mẫu bằng 0.','Rút gọn và tính giới hạn một phía tại điểm loại để kiểm tra tiệm cận đứng.','Tính giới hạn ở vô cực hoặc chia đa thức để tìm tiệm cận ngang, xiên.'],
+      ['Tìm tiệm cận đứng của (x² − 4)/((x − 2)(x + 3)).',['Với x khác 2 và −3, rút gọn thành (x + 2)/(x + 3).','Tại 2 giới hạn hữu hạn. Tại −3 mẫu bằng 0 và tử khác 0.'],'Chỉ có x = −3.'],
+      short('Tiệm cận xiên của y = (3x² − x + 2)/(x − 1) là y = ax + b. Tìm a + b.',5,'Chia đa thức được 3x + 2 + 4/(x − 1). Do đó a + b = 3 + 2.')),
+    m('geometry-asymptotes','Tính khoảng cách hoặc diện tích liên quan đến tiệm cận','Tìm phương trình từng tiệm cận trước khi xử lí hình học.',
+      'Khoảng cách từ (x₀; y₀) đến x = a bằng |x₀ − a|.',
+      ['Tìm đúng tiệm cận và ghi phương trình.','Xác định các giao điểm hoặc khoảng cách từ các tọa độ đã cho.','Thay vào công thức góc, độ dài hoặc diện tích theo đề.'],
+      ['Với hai tiệm cận x = 4, y = 3 và hai trục tọa độ, tính diện tích hình chữ nhật tạo bởi bốn đường.',['Hai kích thước là 4 và 3.'],'Diện tích 12.'],
+      short('Đồ thị có tiệm cận x = −5 và y = 2. Tính diện tích hình chữ nhật giới hạn bởi hai tiệm cận và hai trục tọa độ.',10,'Khoảng cách đến hai trục lần lượt là 5 và 2. Diện tích bằng 10.')),
+    m('limit-context','Giải thích tiệm cận trong mô hình thực tế','Một đại lượng tiến sát ngưỡng khi thời gian hoặc quy mô tăng.',
+      'A(t) = L + R(t), R(t) tiến tới 0 ⇒ A(t) tiến tới L.',
+      ['Viết mô hình và ghi miền có ý nghĩa thực tế.','Tính giới hạn theo hướng mà mô hình cho phép, thường là t tiến về +∞.','Diễn giải ngưỡng bằng đúng đơn vị, phân biệt tiến gần với bằng ngưỡng.'],
+      ['Mức tiêu hao bình quân có dạng C(n) = 8 + 24/n với n > 0. Đọc ngưỡng dài hạn.',['Khi n tăng, 24/n tiến tới 0 và vẫn dương.'],'Tiến gần 8 từ phía trên.'],
+      short('Một cảm biến đo T(t) = 22 + 12/(t + 1) độ C, t ≥ 0. Khi thời gian tăng mãi, nhiệt độ tiến gần bao nhiêu độ C?',22,'Phân số 12/(t + 1) tiến tới 0, nên nhiệt độ tiến gần 22°C.'))
+  ],[],'holeGraph');
+
   return lessons;
 })();
