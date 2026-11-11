@@ -76,7 +76,9 @@ const buStudy = (() => {
         const practiceByLesson={};
         const earlier=[];
         for(const {id:lesson,title} of lessonCatalog[id]){
-          const legacy=buCuratedPracticeLessons.has(lesson)?[]:data.byLesson[lesson]||[];
+          const lessonIds=data.byLesson[lesson]||[];
+          const legacy=buCuratedPracticeLessons.has(lesson)?
+            lessonIds.filter(qid=>data.questions[qid]?.reviewed):lessonIds;
           const own=[...supplementalByLesson[lesson]||[],...reviewedByLesson[lesson]||[],...legacy];
           const revision=/^(?:Bài \d+:\s*)?(?:Luyện tập chung|Bài tập cuối chương|Bài tập ôn)/iu.test(title);
           practiceByLesson[lesson]=[...new Set(revision?[...own,...earlier]:own)];

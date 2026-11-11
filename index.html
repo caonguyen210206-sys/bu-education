@@ -1203,7 +1203,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 </dialog>
 <script src="settings.js?v=2"></script>
 <script src="data/curriculum.js"></script>
-<script src="study-store.js?v=8"></script>
+<script src="study-store.js?v=9"></script>
 <script src="class-api.js"></script>
 <script src="math.js?v=4"></script>
 <script src="classroom.js?v=4"></script>
@@ -1926,6 +1926,25 @@ function reasoningFigureHTML(figure) {
   const right = (x,y) => path('M'+x+' '+(y-10)+'h10v10',accent);
 
   switch (figure.type) {
+    case 'vectorSketch': {
+      height = 194;
+      description = figure.description;
+      const points = figure.points;
+      const segment = ([from,to]) => line(...points[from].slice(0,2),...points[to].slice(0,2));
+      const arrow = ([from,to]) => {
+        const [x,y] = points[to];
+        const angle = Math.atan2(y-points[from][1],x-points[from][0]);
+        const head = [angle+Math.PI/6,angle-Math.PI/6].map(a=>
+          [x-10*Math.cos(a),y-10*Math.sin(a)]);
+        return segment([from,to])+path('M'+head[0].join(' ')+'L'+x+' '+y+'L'+head[1].join(' '));
+      };
+      content = figure.segments.map(segment).join('')+figure.arrows.map(arrow).join('')+
+        figure.marks.map(vertices=>path('M'+vertices.map(p=>p.join(' ')).join('L'),accent)).join('')+
+        Object.entries(points).map(([name,[x,y,dx,dy]])=>
+          dx||dy?'<circle cx="'+x+'" cy="'+y+'" r="2.7" fill="'+outline+'"/>'+point(x+dx,y+dy,name):'').join('')+
+        figure.labels.map(([x,y,name])=>point(x,y,name)).join('');
+      break;
+    }
     case 'numberLine': {
       height = 84;
       description = figure.description || 'Trục số';
