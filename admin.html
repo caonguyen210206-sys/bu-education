@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><title>Quản trị · Bu Education</title>
+<style>
+:root{color:#233a2d;background:#f3f3e8;font:15px/1.5 system-ui,sans-serif}*{box-sizing:border-box}
+[hidden]{display:none!important}body{max-width:1150px;margin:auto;padding:24px}h1,h2,h3,p{margin:0 0 10px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:20px}
+a{color:#275a42}section{background:#fffdf5;border:1px solid #d5e0ce;border-radius:12px;padding:17px;margin:12px 0}
+form,fieldset{display:grid;gap:9px;border:0;padding:0;margin:0}label{display:grid;gap:4px;font-weight:620}
+input:not([type=checkbox]),select,button{font:inherit;border:1px solid #b7c9b3;border-radius:7px;padding:7px 10px;color:inherit;background:#fffdf6}
+button{background:#e2eee0;cursor:pointer;font-weight:700}button:disabled{opacity:.5;cursor:default}
+strong{color:#244f36}button.main{background:#2f6547;color:white;border-color:#2f6547}
+fieldset legend{font-weight:740;margin-bottom:6px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:14px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0}.row label,.choice label{display:inline-flex;align-items:center}
+.file-list{display:grid;gap:6px;max-height:380px;overflow:auto;padding:4px}
+.choice{display:flex;align-items:flex-start;gap:8px;border:1px solid #e3e8db;background:#f8faf1;border-radius:8px;padding:6px}
+.choice span{min-width:0;overflow-wrap:anywhere}.choice button{padding:3px 7px}.muted{color:#4c6755}.status{color:#7b4824}
+#issued{overflow-wrap:anywhere}details{margin:6px 0;border-bottom:1px solid #dce5d7;padding:5px}summary{cursor:pointer}
+dialog{border:1px solid #b3c8b2;background:#fffdf5;border-radius:12px;max-width:min(92vw,590px);width:590px}
+dialog::backdrop{background:#18372966}input[type=number]{width:83px}@media(max-width:560px){body{padding:13px}}
+</style>
+</head>
+<body>
+<header><div><span class="muted">BU EDUCATION</span><h1>Quản trị lớp</h1></div><a href="index.html">← Bàn học</a></header>
+<section id="teacherLogin">
+ <form id="login"><label>Mật khẩu quản trị<input name="password" type="password" autocomplete="current-password" required maxlength="180"></label>
+ <button class="main">Đăng nhập</button></form>
+</section>
+<p id="status" class="status" role="status"></p>
+<div id="workspace" hidden>
+ <div class="grid">
+  <section><h2>Tạo lớp</h2><form id="newRoom"><label>Tên lớp<input name="name" required maxlength="70" placeholder="Toán 8 · Nhóm thứ Ba"></label>
+    <label>Khối<select name="grade" id="newGrade"></select></label><button>Tạo lớp</button></form></section>
+  <section><h2>Cấp mật khẩu lớp</h2><form id="newStudent"><label>Lớp<select name="roomId" required></select></label>
+    <label>Tên học sinh<input name="name" required maxlength="70"></label><button>Cấp mật khẩu</button></form>
+    <output id="issued"></output></section>
+ </div>
+ <section><label>Lớp đang quản lý<select id="room"></select></label><div id="students"></div></section>
+ <div id="roomWorkspace" hidden>
+  <section><label>Chương<select id="chapter"></select></label></section>
+  <section><h2>Kho tài liệu Drive</h2>
+    <div class="row"><button id="sync">Đồng bộ ngay</button><span id="syncStatus" class="muted"></span></div>
+    <div class="row"><label>Tìm file <input type="search" id="findFiles" placeholder="Tên PDF, video hoặc ghi chú"></label>
+      <label>Loại <select id="fileKind"><option value="">Tất cả</option><option>PDF</option><option>Video</option><option>Ghi chú</option></select></label>
+      <label><input type="checkbox" id="unplaced" checked> Chưa xếp chương</label></div>
+    <div class="file-list" id="files"></div>
+    <form id="place" style="margin-top:10px"><label>Tên buổi học<input name="session" required maxlength="80" placeholder="Buổi 01 · Ôn công thức"></label>
+      <button>Gắn vào chương đang chọn</button></form>
+    <h3 style="margin-top:12px">Tài liệu trong chương</h3><div id="placed"></div>
+  </section>
+  <section><h2>Giao bài từ ngân hàng</h2>
+    <form id="assignment">
+      <label>Tên bài<input name="title" required maxlength="120" placeholder="Luyện tập sau buổi 01"></label>
+      <div class="row"><label>Giao cho <select name="studentId" id="assignmentStudent"></select></label><label>Hạn nộp <input name="due" type="date"></label></div>
+      <div class="row"><label>Dạng câu <select id="questionType"><option value="">Tổng hợp</option><option value="mcq">Chọn đáp án</option><option value="tf">Đúng / Sai</option><option value="short">Trả lời ngắn</option></select></label>
+        <label><input type="checkbox" value="recognize" data-level> Nhận biết</label><label><input type="checkbox" value="apply" data-level> Vận dụng</label><label><input type="checkbox" value="trap" data-level> Dễ sai</label></div>
+      <div class="row"><label>Số câu <input id="assignmentCount" type="number" min="1" max="20" value="6"></label><button id="pick" type="button">Tạo đề mẫu</button><span id="picked"></span></div>
+      <div id="bank" class="file-list"></div>
+      <button class="main">Giao bài đã chọn</button>
+    </form>
+    <h3 style="margin-top:14px">Bài đã giao và kết quả</h3><div id="assignments"></div>
+  </section>
+ </div>
+</div>
+<script src="settings.js"></script><script src="data/curriculum.js"></script><script src="class-api.js"></script><script src="admin.js"></script>
+</body>
+</html>
