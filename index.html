@@ -1006,6 +1006,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .outline-table th,.outline-table td { border: 1px solid #d8e1d1; padding: 6px 8px; text-align: left; }
 .outline-table thead { background: #e8f0e2; color: #365c40; }
 .outline-table tbody th { color: #355940; }
+.question-data-table table { width: max-content; min-width: 100%; }
+.question-data-table th,.question-data-table td { white-space: nowrap; }
 @media (max-width:600px) {
   .outline-table table { font-size: 12px; }
   .outline-table th,.outline-table td { padding: 4px 5px; }
@@ -1310,12 +1312,14 @@ function outlineExample([title,prompt,steps,answer,note],embedded=false) {
     '<div class="outline-result"><strong>Kết quả</strong>'+theoryParagraphs(answer)+'</div>'+
     (note?'<div class="outline-caution"><strong>Lưu ý</strong>'+theoryParagraphs(note)+'</div>':'')+'</div>';
 }
-function outlineTable([headers,...rows]) {
-  if (!headers) return '';
-  return '<div class="outline-table"><table><thead><tr>'+
-    headers.map(cell=>'<th scope="col">'+theoryFormula(cell)+'</th>').join('')+'</tr></thead><tbody>'+
-    rows.map(([name,...values])=>'<tr><th scope="row">'+theoryFormula(name)+'</th>'+
-      values.map(cell=>'<td>'+theoryFormula(cell)+'</td>').join('')+'</tr>').join('')+
+function outlineTable([headers,...rows],{label='',rowHeadings=true}={}) {
+  if (!headers && (!label || !rows.length)) return '';
+  const headings = headers ? '<thead><tr>'+headers.map(cell=>
+    '<th scope="col">'+theoryFormula(cell)+'</th>').join('')+'</tr></thead>' : '';
+  const attributes = label ? ' question-data-table" tabindex="0" role="region" aria-label="'+esc(label) : '';
+  return '<div class="outline-table'+attributes+'"><table>'+headings+'<tbody>'+
+    rows.map(row=>'<tr>'+row.map((cell,index)=>rowHeadings&&index===0?
+      '<th scope="row">'+theoryFormula(cell)+'</th>':'<td>'+theoryFormula(cell)+'</td>').join('')+'</tr>').join('')+
     '</tbody></table></div>';
 }
 function paperBody(contents,figures) {
@@ -1887,7 +1891,7 @@ document.addEventListener('keydown',e=>{if(!state.quiz||quizLocked()||$('#confir
 $('#loginGrade').value=storage.get('tmn_grade')||'';$$('[data-icon]').forEach(e=>e.outerHTML=icon(e.dataset.icon));
 (async()=>{if(!state.token){showLogin();return;}try{enter(await rpc('bootstrap',state.token));}catch(e){storage.remove('bu_pages_token');state.token='';showLogin();$('#loginError').textContent=e.message.replace(/^.*AUTH:\s*/,'');}})();
 
-function figureHTML(d){if(!d)return '';const illustration=(d.type==='study'?studyFigure(d.id):'')||solidFigureHTML(d)||reasoningFigureHTML(d);if(illustration)return illustration;let s='';const label=(x,y,t)=>'<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="15" fill="#74669d">'+esc(t)+'</text>';const line=(x,y,a,b)=>'<path d="M'+x+' '+y+'L'+a+' '+b+'" stroke="#6c966a" stroke-width="3" fill="none"/>';
+function figureHTML(d){if(!d)return '';if(d.type==='dataTable')return outlineTable([d.headers,...d.rows],d);const illustration=(d.type==='study'?studyFigure(d.id):'')||solidFigureHTML(d)||reasoningFigureHTML(d);if(illustration)return illustration;let s='';const label=(x,y,t)=>'<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="15" fill="#74669d">'+esc(t)+'</text>';const line=(x,y,a,b)=>'<path d="M'+x+' '+y+'L'+a+' '+b+'" stroke="#6c966a" stroke-width="3" fill="none"/>';
   if(d.type==='dots'){s=Array.from({length:d.total??d.n},(_,i)=>'<circle cx="'+(55+(i%5)*58)+'" cy="'+(60+Math.floor(i/5)*65)+'" r="17" fill="'+(i<d.n?'#ad9be5':'#f1b569')+'"/>').join('');if(!(d.total??d.n))s=label(180,85,'Không có chấm tròn');}
 
   else if(d.type==='dotsGroups'){const colors=['#a9b9dd','#e6bb83'];s=[d.a,d.b].map((v,g)=>label(95+g*170,28,g?'Minh':'Lan')+Array.from({length:v},(_,i)=>'<circle cx="'+(48+g*170+i%4*27)+'" cy="'+(60+Math.floor(i/4)*29)+'" r="10" fill="'+colors[g]+'"/>').join('')).join('');}
