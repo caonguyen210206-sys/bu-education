@@ -1949,6 +1949,33 @@ function reasoningFigureHTML(figure) {
         figure.labels.map(([x,y,name])=>point(x,y,name)).join('');
       break;
     }
+    case 'piecewiseGraph': {
+      height = 196;
+      description = figure.description;
+      const minX = figure.points[0][0], maxX = figure.points.at(-1)[0];
+      const maxY = Math.max(...figure.points.map(([,y])=>y));
+      const unit = Math.min(312/(maxX-minX+2),148/(maxY+1));
+      const x = value=>24+(value-minX+1)*unit;
+      const y = value=>166-value*unit;
+      const left = x(minX-1), rightEdge = x(maxX+1), top = y(maxY+1);
+      const originX = x(0), originY = y(0);
+      content = figure.guides.map(([a,b,showHeight])=>
+        line(x(a),originY,x(a),y(b),accent,true)+
+        (showHeight ? line(x(a),y(b),originX,y(b),accent,true) : '')).join('')+
+        path(`M${left} ${originY}H${rightEdge}m-7 -4l7 4l-7 4`)+
+        path(`M${originX} ${originY+6}V${top}m-4 7l4 -7l4 7`)+
+        point(rightEdge+9,originY+15,'x')+point(originX-10,top-2,'y')+
+        point(originX-9,originY+16,'O');
+      for (const tick of figure.xTicks) {
+        content += line(x(tick),originY-3,x(tick),originY+3)+point(x(tick),originY+16,tick);
+      }
+      for (const tick of figure.yTicks) {
+        content += line(originX-3,y(tick),originX+3,y(tick))+point(originX-11,y(tick)+5,tick);
+      }
+      content += path('M'+figure.points.map(([a,b])=>`${x(a)} ${y(b)}`).join('L'))+
+        figure.points.map(([a,b])=>`<circle cx="${x(a)}" cy="${y(b)}" r="3" fill="${outline}"/>`).join('');
+      break;
+    }
     case 'numberLine': {
       height = 84;
       description = figure.description || 'Trục số';
